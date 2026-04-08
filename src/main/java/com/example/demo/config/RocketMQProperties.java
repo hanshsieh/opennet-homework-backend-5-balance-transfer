@@ -3,6 +3,7 @@ package com.example.demo.config;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -10,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "rocketmq")
 @Component
 @Validated
+@Data
 public class RocketMQProperties {
 
 	@NotBlank
@@ -27,77 +29,24 @@ public class RocketMQProperties {
 	@NotNull
 	private Consumer consumer;
 
-	public String getNameServer() {
-		return nameServer;
-	}
-
-	public void setNameServer(String nameServer) {
-		this.nameServer = nameServer;
-	}
-
-	public Producer getProducer() {
-		return producer;
-	}
-
-	public void setProducer(Producer producer) {
-		this.producer = producer;
-	}
-
-	public Topics getTopics() {
-		return topics;
-	}
-
-	public void setTopics(Topics topics) {
-		this.topics = topics;
-	}
-
-	public Consumer getConsumer() {
-		return consumer;
-	}
-
-	public void setConsumer(Consumer consumer) {
-		this.consumer = consumer;
-	}
-
+	@Data
 	public static class Producer {
 
 		@NotBlank
 		private String group;
-
-		public String getGroup() {
-			return group;
-		}
-
-		public void setGroup(String group) {
-			this.group = group;
-		}
 	}
 
+	@Data
 	public static class Topics {
 
 		@NotBlank
 		private String pendingTransfer;
-
-		public String getPendingTransfer() {
-			return pendingTransfer;
-		}
-
-		public void setPendingTransfer(String pendingTransfer) {
-			this.pendingTransfer = pendingTransfer;
-		}
 	}
 
+	@Data
 	public static class Consumer {
 
 		@NotBlank
 		private String group;
-
-		public String getGroup() {
-			return group;
-		}
-
-		public void setGroup(String group) {
-			this.group = group;
-		}
 	}
 }
