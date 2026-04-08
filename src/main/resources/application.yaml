@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: balance-transfer-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/taskdb?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=utf8
+    username: taskuser
+    password: taskpass
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  cache:
+    type: redis
+    cache-names: userBalances
+    redis:
+      time-to-live: 60s
+
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    group: balance-transfer-producer-group
+  topic:
+    events: balance-transfer-events
+
+server:
+  port: 8080
