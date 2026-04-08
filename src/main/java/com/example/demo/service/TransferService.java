@@ -5,11 +5,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.example.demo.domain.TransferEntity;
 import com.example.demo.domain.TransferStatus;
@@ -20,7 +19,6 @@ import com.example.demo.exception.ApiException;
 import com.example.demo.messaging.TransferEventPublisher;
 import com.example.demo.repository.TransferRepository;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.service.cache.UserCacheService;
 
 @Service
 public class TransferService {
@@ -30,42 +28,41 @@ public class TransferService {
 	private final UserRepository userRepository;
 	private final TransferRepository transferRepository;
 	private final TransferEventPublisher eventPublisher;
-	private final UserCacheService cacheEvictor;
 
 	public TransferService(UserRepository userRepository, TransferRepository transferRepository,
-			TransferEventPublisher eventPublisher, UserCacheService cacheEvictor) {
+			TransferEventPublisher eventPublisher) {
 		this.userRepository = userRepository;
 		this.transferRepository = transferRepository;
 		this.eventPublisher = eventPublisher;
-		this.cacheEvictor = cacheEvictor;
 	}
 
-	@Transactional
 	public TransferResponse transfer(TransferRequest request) {
 		validateTransferRequest(request);
 		if (!userRepository.existsByUserId(request.fromUserId()) || !userRepository.existsByUserId(request.toUserId())) {
 			throw new ApiException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND",
 					"One or both users do not exist");
 		}
-		int debited = userRepository.debitIfSufficient(request.fromUserId(), request.amount());
-		if (debited != 1) {
-			throw new ApiException(HttpStatus.CONFLICT, "INSUFFICIENT_BALANCE",
-					"Insufficient balance for user: " + request.fromUserId());
-		}
-		int credited = userRepository.credit(request.toUserId(), request.amount());
-		if (credited != 1) {
-			throw new ApiException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND",
-					"Credit failed; recipient not found: " + request.toUserId());
-		}
 		final var id = UUID.randomUUID().toString();
-		transferRepository.insert(id, request.fromUserId(), request.toUserId(), request.amount(),
-				TransferStatus.SETTLED);
-		registerAfterCommit(() -> {
-			cacheEvictor.evictBalance(request.fromUserId());
-			cacheEvictor.evictBalance(request.toUserId());
-			eventPublisher.publishSettled(id, request.fromUserId(), request.toUserId(), request.amount());
-		});
-		return toResponse(transferRepository.findById(id).orElseThrow());
+		try {
+			var sendResult = eventPublisher.sendPendingTransferTransactional(id, request);
+			LocalTransactionState state = sendResult.getLocalTransactionState();
+			if (state == LocalTransactionState.ROLLBACK_MESSAGE) {
+				throw new ApiException(HttpStatus.CONFLICT, "TRANSFER_CREATE_FAILED",
+						"Could not persist pending transfer (e.g. invalid users or database error)");
+			}
+			if (state != LocalTransactionState.COMMIT_MESSAGE) {
+				throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "TRANSFER_STATE_UNCERTAIN",
+						"Transfer could not be confirmed; check transfer id: " + id);
+			}
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "TRANSFER_MQ_ERROR",
+					"Failed to submit transfer: " + e.getMessage());
+		}
+		return toResponse(transferRepository.findById(id).orElseThrow(() -> new ApiException(
+				HttpStatus.INTERNAL_SERVER_ERROR, "TRANSFER_ROW_MISSING",
+				"Transfer row missing after commit: " + id)));
 	}
 
 	public PagedTransferResponse listTransfers(String userId, int page, int size) {
@@ -86,29 +83,19 @@ public class TransferService {
 			throw new ApiException(HttpStatus.CONFLICT, "TRANSFER_ALREADY_CANCELLED",
 					"Transfer already cancelled: " + transferId);
 		}
+		if (transfer.status() == TransferStatus.SETTLED) {
+			throw new ApiException(HttpStatus.CONFLICT, "TRANSFER_ALREADY_SETTLED",
+					"Cannot cancel a settled transfer: " + transferId);
+		}
 		if (transfer.createdAt().plus(CANCEL_WINDOW).isBefore(Instant.now())) {
 			throw new ApiException(HttpStatus.CONFLICT, "CANCEL_WINDOW_EXPIRED",
 					"Transfer can only be cancelled within " + CANCEL_WINDOW.toMinutes() + " minutes");
 		}
-		int debitedFromRecipient = userRepository.debitIfSufficient(transfer.toUserId(), transfer.amount());
-		if (debitedFromRecipient != 1) {
-			throw new ApiException(HttpStatus.CONFLICT, "INSUFFICIENT_BALANCE",
-					"Cannot cancel: recipient has insufficient balance to reverse transfer");
-		}
-		int creditedToSender = userRepository.credit(transfer.fromUserId(), transfer.amount());
-		if (creditedToSender != 1) {
-			throw new ApiException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND",
-					"Refund failed; sender not found: " + transfer.fromUserId());
-		}
-		int updated = transferRepository.updateStatus(transferId, TransferStatus.CANCELLED);
+		int updated = transferRepository.updateStatusIf(transferId, TransferStatus.PENDING, TransferStatus.CANCELLED);
 		if (updated != 1) {
-			throw new ApiException(HttpStatus.CONFLICT, "TRANSFER_UPDATE_FAILED", "Failed to update transfer status");
+			throw new ApiException(HttpStatus.CONFLICT, "TRANSFER_NOT_PENDING",
+					"Transfer was already settled or cancelled: " + transferId);
 		}
-		registerAfterCommit(() -> {
-			cacheEvictor.evictBalance(transfer.fromUserId());
-			cacheEvictor.evictBalance(transfer.toUserId());
-			eventPublisher.publishCancelled(transferId, transfer.fromUserId(), transfer.toUserId(), transfer.amount());
-		});
 		return toResponse(transferRepository.findById(transferId).orElseThrow());
 	}
 
@@ -122,18 +109,5 @@ public class TransferService {
 	private TransferResponse toResponse(TransferEntity e) {
 		return new TransferResponse(e.id(), e.fromUserId(), e.toUserId(), e.amount(), e.status().name(),
 				e.createdAt());
-	}
-
-	private static void registerAfterCommit(Runnable action) {
-		if (TransactionSynchronizationManager.isSynchronizationActive()) {
-			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-				@Override
-				public void afterCommit() {
-					action.run();
-				}
-			});
-		} else {
-			action.run();
-		}
 	}
 }

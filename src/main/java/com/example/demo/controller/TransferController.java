@@ -34,7 +34,7 @@ public class TransferController {
 	@PostMapping
 	public ResponseEntity<TransferResponse> transfer(@Validated @RequestBody TransferRequest request) {
 		TransferResponse body = transferService.transfer(request);
-		return ResponseEntity.status(HttpStatus.CREATED).body(body);
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(body);
 	}
 
 	@GetMapping

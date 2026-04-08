@@ -23,6 +23,10 @@ public class RocketMQProperties {
 	@NotNull
 	private Topic topic;
 
+	@Valid
+	@NotNull
+	private Consumer consumer;
+
 	public String getNameServer() {
 		return nameServer;
 	}
@@ -45,6 +49,14 @@ public class RocketMQProperties {
 
 	public void setTopic(Topic topic) {
 		this.topic = topic;
+	}
+
+	public Consumer getConsumer() {
+		return consumer;
+	}
+
+	public void setConsumer(Consumer consumer) {
+		this.consumer = consumer;
 	}
 
 	public static class Producer {
@@ -72,6 +84,20 @@ public class RocketMQProperties {
 
 		public void setEvents(String events) {
 			this.events = events;
+		}
+	}
+
+	public static class Consumer {
+
+		@NotBlank
+		private String group;
+
+		public String getGroup() {
+			return group;
+		}
+
+		public void setGroup(String group) {
+			this.group = group;
 		}
 	}
 }

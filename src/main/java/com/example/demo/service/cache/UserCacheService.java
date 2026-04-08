@@ -4,6 +4,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Component;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Separate component so {@link CacheEvict} runs through the Spring proxy (no self-invocation).
@@ -12,11 +13,7 @@ import org.slf4j.Logger;
 public class UserCacheService {
 	public static final String BALANCES = "users:balances";
 
-	private final Logger log;
-
-	public UserCacheService(Logger log) {
-		this.log = log;
-	}
+	private static final Logger log = LoggerFactory.getLogger(UserCacheService.class);
 
 	@CacheEvict(cacheNames = BALANCES, key = "#userId")
 	public void evictBalance(String userId) {

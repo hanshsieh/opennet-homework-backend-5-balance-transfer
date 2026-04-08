@@ -1,5 +1,7 @@
 package com.example.demo.repository;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -42,14 +44,32 @@ public class TransferRepository {
 						FROM transfers WHERE id = :id
 						""",
 				new MapSqlParameterSource("id", id),
-				(rs, rowNum) -> new TransferEntity(
-						rs.getString("id"),
-						rs.getString("from_user_id"),
-						rs.getString("to_user_id"),
-						rs.getLong("amount"),
-						TransferStatus.valueOf(rs.getString("status")),
-						toInstant(rs.getTimestamp("created_at"))));
+				this::mapRow);
 		return list.stream().findFirst();
+	}
+
+	/**
+	 * Locks the transfer row for update (caller must run inside a transaction).
+	 */
+	public Optional<TransferEntity> findByIdForUpdate(String id) {
+		var list = jdbc.query(
+				"""
+						SELECT id, from_user_id, to_user_id, amount, status, created_at
+						FROM transfers WHERE id = :id FOR UPDATE
+						""",
+				new MapSqlParameterSource("id", id),
+				this::mapRow);
+		return list.stream().findFirst();
+	}
+
+	private TransferEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
+		return new TransferEntity(
+				rs.getString("id"),
+				rs.getString("from_user_id"),
+				rs.getString("to_user_id"),
+				rs.getLong("amount"),
+				TransferStatus.valueOf(rs.getString("status")),
+				toInstant(rs.getTimestamp("created_at")));
 	}
 
 	public long countByUserInvolved(String userId) {
@@ -79,13 +99,7 @@ public class TransferRepository {
 						LIMIT :limit OFFSET :offset
 						""",
 				params,
-				(rs, rowNum) -> new TransferEntity(
-						rs.getString("id"),
-						rs.getString("from_user_id"),
-						rs.getString("to_user_id"),
-						rs.getLong("amount"),
-						TransferStatus.valueOf(rs.getString("status")),
-						toInstant(rs.getTimestamp("created_at"))));
+				this::mapRow);
 		return new PagedTransfers(content, total);
 	}
 
@@ -98,6 +112,18 @@ public class TransferRepository {
 				new MapSqlParameterSource()
 						.addValue("id", id)
 						.addValue("status", newStatus.name()));
+	}
+
+	public int updateStatusIf(String id, TransferStatus expected, TransferStatus newStatus) {
+		return jdbc.update(
+				"""
+						UPDATE transfers SET status = :newStatus
+						WHERE id = :id AND status = :expected
+						""",
+				new MapSqlParameterSource()
+						.addValue("id", id)
+						.addValue("expected", expected.name())
+						.addValue("newStatus", newStatus.name()));
 	}
 
 	private static Instant toInstant(Timestamp ts) {
