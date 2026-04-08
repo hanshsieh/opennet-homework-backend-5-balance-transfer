@@ -5,10 +5,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.demo.api.dto.CreateUserRequest;
-import com.example.demo.api.dto.UserBalanceResponse;
-import com.example.demo.api.dto.UserResponse;
 import com.example.demo.cache.CacheNames;
+import com.example.demo.dto.CreateUserRequest;
+import com.example.demo.dto.UserBalanceResponse;
+import com.example.demo.dto.UserResponse;
 import com.example.demo.exception.ApiException;
 import com.example.demo.repository.UserRepository;
 

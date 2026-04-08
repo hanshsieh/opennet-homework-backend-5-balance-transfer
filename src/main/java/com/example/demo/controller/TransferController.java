@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
 
-import com.example.demo.api.dto.PagedTransferResponse;
-import com.example.demo.api.dto.TransferRequest;
-import com.example.demo.api.dto.TransferResponse;
+import com.example.demo.dto.PagedTransferResponse;
+import com.example.demo.dto.TransferRequest;
+import com.example.demo.dto.TransferResponse;
 import com.example.demo.exception.ApiException;
 import com.example.demo.service.TransferService;
 
