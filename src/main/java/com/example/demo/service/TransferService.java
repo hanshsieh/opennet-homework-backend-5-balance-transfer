@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,11 +62,13 @@ public class TransferService {
 		if (!userRepository.existsByUserId(userId)) {
 			throw new ApiException(ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
 		}
-		TransferRepository.PagedTransfers pageResult = transferRepository.findByUserInvolved(userId, page, size);
-		List<TransferResponse> content = pageResult.content().stream().map(this::toResponse).toList();
+		final var pageable = PageRequest.of(page, size);
+		final var entities = transferRepository.findByFromUserIdOrToUserIdOrderByCreatedAtDesc(userId, userId, pageable);
+		final var totalElements = transferRepository.countByFromUserIdOrToUserId(userId, userId);
+		List<TransferResponse> content = entities.stream().map(this::toResponse).toList();
 		return PagedTransferResponse.builder()
 				.content(content)
-				.totalElements(pageResult.totalElements())
+				.totalElements(totalElements)
 				.number(page)
 				.size(size)
 				.build();
@@ -76,26 +79,31 @@ public class TransferService {
 		TransferEntity transfer = transferRepository.findByIdForUpdate(transferId)
 				.orElseThrow(() -> new ApiException(ErrorCode.TRANSFER_NOT_FOUND,
 						"Transfer not found: " + transferId));
-		if (transfer.status() == TransferStatus.CANCELLED) {
+		if (transfer.getStatus() == TransferStatus.CANCELLED) {
 			return toResponse(transfer);
 		}
-		if (transfer.status() != TransferStatus.PENDING) {
+		if (transfer.getStatus() != TransferStatus.PENDING) {
 			throw new ApiException(ErrorCode.TRANSFER_NOT_PENDING,
 					"Transfer is not pending: " + transferId);
 		}
-		if (transfer.createdAt().plus(CANCEL_WINDOW).isBefore(Instant.now())) {
+		if (transfer.getCreatedAt().plus(CANCEL_WINDOW).isBefore(Instant.now())) {
 			throw new ApiException(ErrorCode.CANCEL_WINDOW_EXPIRED,
 					"Transfer can only be cancelled within " + CANCEL_WINDOW.toMinutes() + " minutes");
 		}
-		transferRepository.updateStatus(transferId, TransferStatus.CANCELLED);
-		return toResponse(transferRepository.findById(transferId).orElseThrow());
+		transfer.setStatus(TransferStatus.CANCELLED);
+		return toResponse(transfer);
 	}
 
 	@Transactional
 	public LocalTransactionState createTransferLocally(PendingTransferLocalArgs args) {
 		try {
-			transferRepository.insert(args.getTransferId(), args.getFromUserId(), args.getToUserId(), args.getAmount(),
-				TransferStatus.PENDING);
+			transferRepository.save(TransferEntity.builder()
+					.id(args.getTransferId())
+					.fromUserId(args.getFromUserId())
+					.toUserId(args.getToUserId())
+					.amount(args.getAmount())
+					.status(TransferStatus.PENDING)
+					.build());
 			return LocalTransactionState.COMMIT_MESSAGE;
 		} catch (Exception e) {
 			log.error("Failed to create transfer locally: {}", args.getTransferId(), e);
@@ -112,12 +120,12 @@ public class TransferService {
 
 	private TransferResponse toResponse(TransferEntity e) {
 		return TransferResponse.builder()
-				.id(e.id())
-				.fromUserId(e.fromUserId())
-				.toUserId(e.toUserId())
-				.amount(e.amount())
-				.status(e.status().name())
-				.createdAt(e.createdAt())
+				.id(e.getId())
+				.fromUserId(e.getFromUserId())
+				.toUserId(e.getToUserId())
+				.amount(e.getAmount())
+				.status(e.getStatus().name())
+				.createdAt(e.getCreatedAt())
 				.build();
 	}
 }

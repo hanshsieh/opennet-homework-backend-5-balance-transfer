@@ -36,53 +36,43 @@ public class TransferSettlementService {
 	@Transactional
 	public void settle(String transferId) {
 		final var transfer = transferRepository.findByIdForUpdate(transferId).orElse(null);
-		if (transfer == null || transfer.status() != TransferStatus.PENDING) {
+		if (transfer == null || transfer.getStatus() != TransferStatus.PENDING) {
 			log.info("Skip settlement, transfer missing or not pending: {}", transferId);
 			return;
 		}
-		if (transfer.fromUserId().equals(transfer.toUserId())) {
-			markFailed(transferId);
+		if (transfer.getFromUserId().equals(transfer.getToUserId())) {
+			transfer.setStatus(TransferStatus.FAILED);
 			return;
 		}
 		final var lockedUsers = userRepository.findByUserIdsForUpdate(
-				List.of(transfer.fromUserId(), transfer.toUserId()));
+				List.of(transfer.getFromUserId(), transfer.getToUserId()));
 		UserEntity fromUser = null;
 		UserEntity toUser = null;
 		for (var user : lockedUsers) {
-			if (transfer.fromUserId().equals(user.getUserId())) {
+			if (transfer.getFromUserId().equals(user.getUserId())) {
 				fromUser = user;
 			}
-			if (transfer.toUserId().equals(user.getUserId())) {
+			if (transfer.getToUserId().equals(user.getUserId())) {
 				toUser = user;
 			}
 		}
 		if (fromUser == null || toUser == null) {
-			markFailed(transferId);
+			transfer.setStatus(TransferStatus.FAILED);
 			return;
 		}
-		if (fromUser.getBalance() < transfer.amount()) {
-			markFailed(transferId);
+		if (fromUser.getBalance() < transfer.getAmount()) {
+			transfer.setStatus(TransferStatus.FAILED);
 			return;
 		}
-		final long fromBalanceAfterTransfer = fromUser.getBalance() - transfer.amount();
-		final long toBalanceAfterTransfer = toUser.getBalance() + transfer.amount();
+		final long fromBalanceAfterTransfer = fromUser.getBalance() - transfer.getAmount();
+		final long toBalanceAfterTransfer = toUser.getBalance() + transfer.getAmount();
 		fromUser.setBalance(fromBalanceAfterTransfer);
 		toUser.setBalance(toBalanceAfterTransfer);
-		final var updated = transferRepository.updateStatus(transfer.id(), TransferStatus.SETTLED);
-		if (updated != 1) {
-			throw new IllegalStateException("Settlement status update failed for transfer " + transferId);
-		}
+		transfer.setStatus(TransferStatus.SETTLED);
 		registerAfterCommit(() -> {
-			cacheEvictor.evictBalance(transfer.fromUserId());
-			cacheEvictor.evictBalance(transfer.toUserId());
+			cacheEvictor.evictBalance(transfer.getFromUserId());
+			cacheEvictor.evictBalance(transfer.getToUserId());
 		});
-	}
-
-	private void markFailed(String transferId) {
-		final var updated = transferRepository.updateStatus(transferId, TransferStatus.FAILED);
-		if (updated != 1) {
-			throw new IllegalStateException("Failed status update failed for transfer " + transferId);
-		}
 	}
 
 	private static void registerAfterCommit(Runnable action) {

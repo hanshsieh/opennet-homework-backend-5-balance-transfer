@@ -3,6 +3,7 @@ package com.example.demo.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.entity.TransferEntity;
 import com.example.demo.entity.TransferStatus;
 import com.example.demo.repository.TransferRepository;
 import com.example.demo.service.messaging.PendingTransferLocalArgs;
@@ -21,7 +22,12 @@ public class TransferPendingCreationService {
 
 	@Transactional
 	public void createPending(PendingTransferLocalArgs args) {
-		transferRepository.insert(args.getTransferId(), args.getFromUserId(), args.getToUserId(), args.getAmount(),
-				TransferStatus.PENDING);
+		transferRepository.save(TransferEntity.builder()
+				.id(args.getTransferId())
+				.fromUserId(args.getFromUserId())
+				.toUserId(args.getToUserId())
+				.amount(args.getAmount())
+				.status(TransferStatus.PENDING)
+				.build());
 	}
 }
