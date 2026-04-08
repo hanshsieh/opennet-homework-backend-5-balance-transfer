@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import com.example.demo.cache.UserBalanceCacheEvictor;
 import com.example.demo.domain.TransferEntity;
 import com.example.demo.domain.TransferStatus;
 import com.example.demo.dto.PagedTransferResponse;
@@ -21,6 +20,7 @@ import com.example.demo.exception.ApiException;
 import com.example.demo.messaging.TransferEventPublisher;
 import com.example.demo.repository.TransferRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.service.cache.UserCacheService;
 
 @Service
 public class TransferService {
@@ -30,10 +30,10 @@ public class TransferService {
 	private final UserRepository userRepository;
 	private final TransferRepository transferRepository;
 	private final TransferEventPublisher eventPublisher;
-	private final UserBalanceCacheEvictor cacheEvictor;
+	private final UserCacheService cacheEvictor;
 
 	public TransferService(UserRepository userRepository, TransferRepository transferRepository,
-			TransferEventPublisher eventPublisher, UserBalanceCacheEvictor cacheEvictor) {
+			TransferEventPublisher eventPublisher, UserCacheService cacheEvictor) {
 		this.userRepository = userRepository;
 		this.transferRepository = transferRepository;
 		this.eventPublisher = eventPublisher;
@@ -61,8 +61,8 @@ public class TransferService {
 		transferRepository.insert(id, request.fromUserId(), request.toUserId(), request.amount(),
 				TransferStatus.SETTLED);
 		registerAfterCommit(() -> {
-			cacheEvictor.evict(request.fromUserId());
-			cacheEvictor.evict(request.toUserId());
+			cacheEvictor.evictBalance(request.fromUserId());
+			cacheEvictor.evictBalance(request.toUserId());
 			eventPublisher.publishSettled(id, request.fromUserId(), request.toUserId(), request.amount());
 		});
 		return toResponse(transferRepository.findById(id).orElseThrow());
@@ -105,8 +105,8 @@ public class TransferService {
 			throw new ApiException(HttpStatus.CONFLICT, "TRANSFER_UPDATE_FAILED", "Failed to update transfer status");
 		}
 		registerAfterCommit(() -> {
-			cacheEvictor.evict(transfer.fromUserId());
-			cacheEvictor.evict(transfer.toUserId());
+			cacheEvictor.evictBalance(transfer.fromUserId());
+			cacheEvictor.evictBalance(transfer.toUserId());
 			eventPublisher.publishCancelled(transferId, transfer.fromUserId(), transfer.toUserId(), transfer.amount());
 		});
 		return toResponse(transferRepository.findById(transferId).orElseThrow());

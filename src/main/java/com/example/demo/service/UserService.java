@@ -5,12 +5,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.demo.cache.CacheNames;
 import com.example.demo.dto.CreateUserRequest;
 import com.example.demo.dto.UserBalanceResponse;
 import com.example.demo.dto.UserResponse;
 import com.example.demo.exception.ApiException;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.service.cache.UserCacheService;
 
 @Service
 public class UserService {
@@ -24,7 +24,7 @@ public class UserService {
 	}
 
 	@Transactional
-	@CacheEvict(cacheNames = CacheNames.USER_BALANCES, key = "#request.userId")
+	@CacheEvict(cacheNames = UserCacheService.BALANCES, key = "#request.userId")
 	public UserResponse createUser(CreateUserRequest request) {
 		if (userRepository.existsByUserId(request.userId())) {
 			throw new ApiException(HttpStatus.CONFLICT, "USER_ALREADY_EXISTS",

@@ -3,8 +3,8 @@ package com.example.demo.service;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.cache.CacheNames;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.service.cache.UserCacheService;
 
 @Service
 public class UserBalanceService {
@@ -15,7 +15,7 @@ public class UserBalanceService {
 		this.userRepository = userRepository;
 	}
 
-	@Cacheable(cacheNames = CacheNames.USER_BALANCES, key = "#userId", unless = "#result == null")
+	@Cacheable(cacheNames = UserCacheService.BALANCES, key = "#userId", unless = "#result == null")
 	public Long getBalanceOrNull(String userId) {
 		return userRepository.findBalanceByUserId(userId).orElse(null);
 	}
