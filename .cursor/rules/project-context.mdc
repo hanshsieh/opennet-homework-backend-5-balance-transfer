@@ -1,11 +1,11 @@
 ---
 description: Project purpose, features, and architecture
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Purpose
 
 It's a service that support **atomic transfers** between users. 
+Framework: Spring Boot
 
 # Supported Features
 
@@ -18,7 +18,7 @@ It's a service that support **atomic transfers** between users.
 - **Create Transfer**
   - Endpoint: `POST /transfers`
   - Transfer amount from one user to the other.
-  - Record the transaction atomically, and asynchronously credit and debit.
+  - Record the transaction atomically, and asynchronously updating the balances of the users.
 - **List transfer history**
   - Endpoint: `GET /transfers?userId={userId}`
   - Paginated, recent-first
@@ -68,9 +68,10 @@ sequenceDiagram
     end
 ```
 
-
-
 ## Create Transfer
+
+The actual update of the user balances is done asynchronously using RocketMQ.  
+It uses RocketMQ's transactional message to ensure atomic db update + send message.  
 
 ```mermaid
 sequenceDiagram
@@ -82,16 +83,16 @@ sequenceDiagram
     participant Redis as Redis
 
     Client->>App: POST /transfers
-    App->>DB: Insert transfer (status = PENDING)
-    DB-->>App: Done
-    App->>MQ: Publish TransferCreated event (transferId)
+    App->>MQ: Half message
+    App->>DB: Create transfer
+    App->>MQ: Commit
     App-->>Client: 202 Accepted / transferId
 
-    MQ-->>App: Deliver TransferCreated event
+    MQ-->>App: Transactional Message
     App->>DB: Load transfer by transferId
     alt transfer status == PENDING
-        App->>DB: Debit source user balance
-        App->>DB: Credit target user balance
+        App->>DB: Decrease source user balance
+        App->>DB: Increase target user balance
         App->>DB: Update transfer status = SETTLED
         DB-->>App: Transaction committed
         App->>Redis: DEL userBalances:{fromUserId}
