@@ -45,7 +45,7 @@ public class TransferTransactionListener implements TransactionListener {
 	@Override
 	public LocalTransactionState checkLocalTransaction(MessageExt msg) {
 		try {
-			final var transferId = objectMapper.readValue(msg.getBody(), TransferIdPayload.class).transferId();
+			final var transferId = objectMapper.readValue(msg.getBody(), PendingTransferPayload.class).getTransferId();
 			return transferRepository.findById(transferId).isPresent()
 					? LocalTransactionState.COMMIT_MESSAGE
 					: LocalTransactionState.ROLLBACK_MESSAGE;

@@ -1,5 +1,5 @@
 ---
-description: Project purpose, features, and architecture
+description: Project purpose, features, coding convention and architecture
 alwaysApply: false
 ---
 # Purpose
@@ -102,3 +102,6 @@ sequenceDiagram
     end
 ```
 
+# Coding Convention
+- Use lombok to define POJO and Beans if possible. Use `@Builder` when appropriate.
+- Local variables should use `final` and `var` if possible.

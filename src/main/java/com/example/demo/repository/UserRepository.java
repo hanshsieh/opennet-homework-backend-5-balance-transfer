@@ -1,10 +1,15 @@
 package com.example.demo.repository;
 
+import java.util.List;
 import java.util.Optional;
+import java.sql.Timestamp;
+import java.time.Instant;
 
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+
+import com.example.demo.domain.UserEntity;
 
 @Repository
 public class UserRepository {
@@ -39,22 +44,35 @@ public class UserRepository {
 		return list.stream().findFirst();
 	}
 
-	/**
-	 * Debits balance if sufficient funds. Returns number of rows updated (0 or 1).
-	 */
-	public int debitIfSufficient(String userId, long amount) {
-		return jdbc.update(
-				"UPDATE users SET balance = balance - :amount WHERE user_id = :userId AND balance >= :amount",
-				new MapSqlParameterSource()
-						.addValue("userId", userId)
-						.addValue("amount", amount));
+	public List<UserEntity> findByUserIdsForUpdate(List<String> userIds) {
+		final var params = new MapSqlParameterSource()
+				.addValue("userIds", userIds);
+		return jdbc.query(
+				"""
+						SELECT user_id, balance, created_at, updated_at
+						FROM users
+						WHERE user_id IN (:userIds)
+						ORDER BY user_id ASC
+						FOR UPDATE
+						""",
+				params,
+				(rs, rowNum) -> UserEntity.builder()
+						.userId(rs.getString("user_id"))
+						.balance(rs.getLong("balance"))
+						.createdAt(toInstant(rs.getTimestamp("created_at")))
+						.updatedAt(toInstant(rs.getTimestamp("updated_at")))
+						.build());
 	}
 
-	public int credit(String userId, long amount) {
+	private static Instant toInstant(Timestamp ts) {
+		return ts == null ? null : ts.toInstant();
+	}
+
+	public int overwriteBalance(String userId, long balance) {
 		return jdbc.update(
-				"UPDATE users SET balance = balance + :amount WHERE user_id = :userId",
+				"UPDATE users SET balance = :balance WHERE user_id = :userId",
 				new MapSqlParameterSource()
 						.addValue("userId", userId)
-						.addValue("amount", amount));
+						.addValue("balance", balance));
 	}
 }

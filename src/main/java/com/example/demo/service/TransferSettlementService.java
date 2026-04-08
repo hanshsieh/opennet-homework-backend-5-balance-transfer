@@ -1,18 +1,24 @@
 package com.example.demo.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.example.demo.domain.TransferEntity;
 import com.example.demo.domain.TransferStatus;
+import com.example.demo.domain.UserEntity;
 import com.example.demo.repository.TransferRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.cache.UserCacheService;
 
 @Service
 public class TransferSettlementService {
+
+	private static final Logger log = LoggerFactory.getLogger(TransferSettlementService.class);
 
 	private final TransferRepository transferRepository;
 	private final UserRepository userRepository;
@@ -29,30 +35,46 @@ public class TransferSettlementService {
 
 	@Transactional
 	public void settle(String transferId) {
-		TransferEntity transfer = transferRepository.findByIdForUpdate(transferId).orElse(null);
-		if (transfer == null) {
+		final var transfer = transferRepository.findByIdForUpdate(transferId).orElse(null);
+		if (transfer == null || transfer.status() != TransferStatus.PENDING) {
+			log.info("Skip settlement, transfer missing or not pending: {}", transferId);
 			return;
 		}
-		if (transfer.status() != TransferStatus.PENDING) {
-			return;
-		}
-		if (!userRepository.existsByUserId(transfer.fromUserId())
-				|| !userRepository.existsByUserId(transfer.toUserId())) {
+		if (transfer.fromUserId().equals(transfer.toUserId())) {
 			markFailed(transferId);
 			return;
 		}
-		int debited = userRepository.debitIfSufficient(transfer.fromUserId(), transfer.amount());
-		if (debited != 1) {
+		final var lockedUsers = userRepository.findByUserIdsForUpdate(
+				List.of(transfer.fromUserId(), transfer.toUserId()));
+		UserEntity fromUser = null;
+		UserEntity toUser = null;
+		for (var user : lockedUsers) {
+			if (transfer.fromUserId().equals(user.getUserId())) {
+				fromUser = user;
+			}
+			if (transfer.toUserId().equals(user.getUserId())) {
+				toUser = user;
+			}
+		}
+		if (fromUser == null || toUser == null) {
 			markFailed(transferId);
 			return;
 		}
-		int credited = userRepository.credit(transfer.toUserId(), transfer.amount());
-		if (credited != 1) {
-			userRepository.credit(transfer.fromUserId(), transfer.amount());
+		if (fromUser.getBalance() < transfer.amount()) {
 			markFailed(transferId);
 			return;
 		}
-		int updated = transferRepository.updateStatus(transfer.id(), TransferStatus.SETTLED);
+		final long fromBalanceAfterTransfer = fromUser.getBalance() - transfer.amount();
+		final long toBalanceAfterTransfer = toUser.getBalance() + transfer.amount();
+		final var fromUpdated = userRepository.overwriteBalance(transfer.fromUserId(), fromBalanceAfterTransfer);
+		if (fromUpdated != 1) {
+			throw new IllegalStateException("Debit overwrite failed for transfer " + transferId);
+		}
+		final var toUpdated = userRepository.overwriteBalance(transfer.toUserId(), toBalanceAfterTransfer);
+		if (toUpdated != 1) {
+			throw new IllegalStateException("Credit overwrite failed for transfer " + transferId);
+		}
+		final var updated = transferRepository.updateStatus(transfer.id(), TransferStatus.SETTLED);
 		if (updated != 1) {
 			throw new IllegalStateException("Settlement status update failed for transfer " + transferId);
 		}
@@ -63,7 +85,10 @@ public class TransferSettlementService {
 	}
 
 	private void markFailed(String transferId) {
-		transferRepository.updateStatusIf(transferId, TransferStatus.PENDING, TransferStatus.FAILED);
+		final var updated = transferRepository.updateStatus(transferId, TransferStatus.FAILED);
+		if (updated != 1) {
+			throw new IllegalStateException("Failed status update failed for transfer " + transferId);
+		}
 	}
 
 	private static void registerAfterCommit(Runnable action) {

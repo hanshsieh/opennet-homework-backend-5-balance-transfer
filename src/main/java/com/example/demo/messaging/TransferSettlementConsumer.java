@@ -43,7 +43,8 @@ public class TransferSettlementConsumer {
 		consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
 			for (var msg : msgs) {
 				try {
-					String transferId = objectMapper.readValue(msg.getBody(), TransferIdPayload.class).transferId();
+					final var transferId = objectMapper.readValue(msg.getBody(), PendingTransferPayload.class)
+							.getTransferId();
 					settlementService.settle(transferId);
 				} catch (IllegalStateException e) {
 					log.warn("Settlement will retry: {}", e.getMessage());

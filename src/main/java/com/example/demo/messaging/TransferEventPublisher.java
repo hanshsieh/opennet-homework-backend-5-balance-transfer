@@ -29,7 +29,9 @@ public class TransferEventPublisher {
 
 	public TransactionSendResult sendPendingTransfer(String transferId, TransferRequest request)
 			throws Exception {
-		final var body = objectMapper.writeValueAsString(new TransferIdPayload(transferId))
+		final var body = objectMapper.writeValueAsString(PendingTransferPayload.builder()
+				.transferId(transferId)
+				.build())
 				.getBytes(StandardCharsets.UTF_8);
 		final var msg = new Message(properties.getTopics().getPendingTransfer(), body);
 		final var localArgs = PendingTransferLocalArgs.builder()
