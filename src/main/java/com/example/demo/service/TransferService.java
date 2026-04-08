@@ -39,7 +39,8 @@ public class TransferService {
 
 	public TransferResponse transfer(TransferRequest request) {
 		validateTransferRequest(request);
-		if (!userRepository.existsByUserId(request.fromUserId()) || !userRepository.existsByUserId(request.toUserId())) {
+		if (!userRepository.existsByUserId(request.getFromUserId())
+				|| !userRepository.existsByUserId(request.getToUserId())) {
 			throw new ApiException(HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND,
 					"One or both users do not exist");
 		}
@@ -72,43 +73,49 @@ public class TransferService {
 		}
 		TransferRepository.PagedTransfers pageResult = transferRepository.findByUserInvolved(userId, page, size);
 		List<TransferResponse> content = pageResult.content().stream().map(this::toResponse).toList();
-		return new PagedTransferResponse(content, pageResult.totalElements(), page, size);
+		return PagedTransferResponse.builder()
+				.content(content)
+				.totalElements(pageResult.totalElements())
+				.number(page)
+				.size(size)
+				.build();
 	}
 
 	@Transactional
 	public TransferResponse cancelTransfer(String transferId) {
-		TransferEntity transfer = transferRepository.findById(transferId)
+		TransferEntity transfer = transferRepository.findByIdForUpdate(transferId)
 				.orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, ErrorCode.TRANSFER_NOT_FOUND,
 						"Transfer not found: " + transferId));
 		if (transfer.status() == TransferStatus.CANCELLED) {
-			throw new ApiException(HttpStatus.CONFLICT, ErrorCode.TRANSFER_ALREADY_CANCELLED,
-					"Transfer already cancelled: " + transferId);
+			return toResponse(transfer);
 		}
-		if (transfer.status() == TransferStatus.SETTLED) {
-			throw new ApiException(HttpStatus.CONFLICT, ErrorCode.TRANSFER_ALREADY_SETTLED,
-					"Cannot cancel a settled transfer: " + transferId);
+		if (transfer.status() != TransferStatus.PENDING) {
+			throw new ApiException(HttpStatus.CONFLICT, ErrorCode.TRANSFER_NOT_PENDING,
+					"Transfer is not pending: " + transferId);
 		}
 		if (transfer.createdAt().plus(CANCEL_WINDOW).isBefore(Instant.now())) {
 			throw new ApiException(HttpStatus.CONFLICT, ErrorCode.CANCEL_WINDOW_EXPIRED,
 					"Transfer can only be cancelled within " + CANCEL_WINDOW.toMinutes() + " minutes");
 		}
-		int updated = transferRepository.updateStatusIf(transferId, TransferStatus.PENDING, TransferStatus.CANCELLED);
-		if (updated != 1) {
-			throw new ApiException(HttpStatus.CONFLICT, ErrorCode.TRANSFER_NOT_PENDING,
-					"Transfer was already settled or cancelled: " + transferId);
-		}
+		transferRepository.updateStatus(transferId, TransferStatus.CANCELLED);
 		return toResponse(transferRepository.findById(transferId).orElseThrow());
 	}
 
 	private static void validateTransferRequest(TransferRequest request) {
-		if (request.fromUserId().equals(request.toUserId())) {
+		if (request.getFromUserId().equals(request.getToUserId())) {
 			throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_TRANSFER,
 					"fromUserId and toUserId must differ");
 		}
 	}
 
 	private TransferResponse toResponse(TransferEntity e) {
-		return new TransferResponse(e.id(), e.fromUserId(), e.toUserId(), e.amount(), e.status().name(),
-				e.createdAt());
+		return TransferResponse.builder()
+				.id(e.id())
+				.fromUserId(e.fromUserId())
+				.toUserId(e.toUserId())
+				.amount(e.amount())
+				.status(e.status().name())
+				.createdAt(e.createdAt())
+				.build();
 	}
 }

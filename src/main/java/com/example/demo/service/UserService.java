@@ -27,12 +27,15 @@ public class UserService {
 	@Transactional
 	@CacheEvict(cacheNames = UserCacheService.BALANCES, key = "#request.userId")
 	public UserResponse createUser(CreateUserRequest request) {
-		if (userRepository.existsByUserId(request.userId())) {
+		if (userRepository.existsByUserId(request.getUserId())) {
 			throw new ApiException(HttpStatus.CONFLICT, ErrorCode.USER_ALREADY_EXISTS,
-					"User already exists: " + request.userId());
+					"User already exists: " + request.getUserId());
 		}
-		userRepository.insert(request.userId(), request.initialBalance());
-		return new UserResponse(request.userId(), request.initialBalance());
+		userRepository.insert(request.getUserId(), request.getInitialBalance());
+		return UserResponse.builder()
+				.userId(request.getUserId())
+				.balance(request.getInitialBalance())
+				.build();
 	}
 
 	public UserBalanceResponse getBalance(String userId) {
@@ -40,6 +43,9 @@ public class UserService {
 		if (balance == null) {
 			throw new ApiException(HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
 		}
-		return new UserBalanceResponse(userId, balance);
+		return UserBalanceResponse.builder()
+				.userId(userId)
+				.balance(balance)
+				.build();
 	}
 }

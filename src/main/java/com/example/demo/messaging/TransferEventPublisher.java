@@ -33,6 +33,7 @@ public class TransferEventPublisher {
 				.getBytes(StandardCharsets.UTF_8);
 		Message msg = new Message(properties.getTopics().getPendingTransfer(), body);
 		return producer.sendMessageInTransaction(msg,
-				new PendingTransferLocalArgs(transferId, request.fromUserId(), request.toUserId(), request.amount()));
+				new PendingTransferLocalArgs(transferId, request.getFromUserId(), request.getToUserId(),
+						request.getAmount()));
 	}
 }
