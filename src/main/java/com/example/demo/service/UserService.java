@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.CreateUserRequest;
 import com.example.demo.dto.UserBalanceResponse;
-import com.example.demo.dto.UserResponse;
 import com.example.demo.exception.ApiException;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.repository.UserRepository;
@@ -25,16 +24,13 @@ public class UserService {
 
 	@Transactional
 	@CacheEvict(cacheNames = UserCacheService.BALANCES, key = "#request.userId")
-	public UserResponse createUser(CreateUserRequest request) {
+	public String createUser(CreateUserRequest request) {
 		if (userRepository.existsByUserId(request.getUserId())) {
 			throw new ApiException(ErrorCode.USER_ALREADY_EXISTS,
 					"User already exists: " + request.getUserId());
 		}
 		userRepository.insert(request.getUserId(), request.getInitialBalance());
-		return UserResponse.builder()
-				.userId(request.getUserId())
-				.balance(request.getInitialBalance())
-				.build();
+		return request.getUserId();
 	}
 
 	public UserBalanceResponse getBalance(String userId) {

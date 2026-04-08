@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.CreateUserRequest;
+import com.example.demo.dto.CreateUserResponse;
 import com.example.demo.dto.UserBalanceResponse;
-import com.example.demo.dto.UserResponse;
 import com.example.demo.service.UserService;
 
 import jakarta.validation.constraints.NotBlank;
@@ -29,8 +29,11 @@ public class UserController {
 	}
 
 	@PostMapping
-	public ResponseEntity<UserResponse> createUser(@Validated @RequestBody CreateUserRequest request) {
-		final var body = userService.createUser(request);
+	public ResponseEntity<CreateUserResponse> createUser(@Validated @RequestBody CreateUserRequest request) {
+		final var userId = userService.createUser(request);
+		final var body = CreateUserResponse.builder()
+				.id(userId)
+				.build();
 		return ResponseEntity.status(HttpStatus.CREATED).body(body);
 	}
 

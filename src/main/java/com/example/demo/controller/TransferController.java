@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
 
+import com.example.demo.dto.CreateTransferResponse;
 import com.example.demo.dto.PagedTransferResponse;
 import com.example.demo.dto.TransferRequest;
 import com.example.demo.dto.TransferResponse;
@@ -32,9 +33,12 @@ public class TransferController {
 	}
 
 	@PostMapping
-	public ResponseEntity<TransferResponse> transfer(@Validated @RequestBody TransferRequest request) {
-		TransferResponse body = transferService.transfer(request);
-		return ResponseEntity.status(HttpStatus.ACCEPTED).body(body);
+	public ResponseEntity<CreateTransferResponse> createTransfer(@Validated @RequestBody TransferRequest request) {
+		final var transferId = transferService.createTransfer(request);
+		final var body = CreateTransferResponse.builder()
+				.id(transferId)
+				.build();
+		return ResponseEntity.status(HttpStatus.CREATED).body(body);
 	}
 
 	@GetMapping

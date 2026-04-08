@@ -35,7 +35,7 @@ public class TransferService {
 		this.eventPublisher = eventPublisher;
 	}
 
-	public TransferResponse transfer(TransferRequest request) {
+	public String createTransfer(TransferRequest request) {
 		validateTransferRequest(request);
 		final var id = UUID.randomUUID().toString();
 		try {
@@ -51,9 +51,7 @@ public class TransferService {
 			throw new ApiException(ErrorCode.TRANSFER_MQ_ERROR,
 					"Failed to submit transfer", e);
 		}
-		return toResponse(transferRepository.findById(id).orElseThrow(() -> new ApiException(
-				ErrorCode.TRANSFER_ROW_MISSING,
-				"Transfer row missing after commit: " + id)));
+		return id;
 	}
 
 	public PagedTransferResponse listTransfers(String userId, int page, int size) {
