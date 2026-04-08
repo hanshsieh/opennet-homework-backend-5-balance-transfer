@@ -31,7 +31,7 @@ public class TransferEventPublisher {
 			throws Exception {
 		byte[] body = objectMapper.writeValueAsString(new TransferIdPayload(transferId))
 				.getBytes(StandardCharsets.UTF_8);
-		Message msg = new Message(properties.getTopic().getEvents(), body);
+		Message msg = new Message(properties.getTopics().getPendingTransfer(), body);
 		return producer.sendMessageInTransaction(msg,
 				new PendingTransferLocalArgs(transferId, request.fromUserId(), request.toUserId(), request.amount()));
 	}

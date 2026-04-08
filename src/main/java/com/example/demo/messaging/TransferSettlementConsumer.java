@@ -39,7 +39,7 @@ public class TransferSettlementConsumer {
 	public void start() throws MQClientException {
 		consumer = new DefaultMQPushConsumer(properties.getConsumer().getGroup());
 		consumer.setNamesrvAddr(properties.getNameServer());
-		consumer.subscribe(properties.getTopic().getEvents(), "*");
+		consumer.subscribe(properties.getTopics().getPendingTransfer(), "*");
 		consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
 			for (var msg : msgs) {
 				try {

@@ -19,11 +19,11 @@ spring:
 rocketmq:
   name-server: 127.0.0.1:9876
   producer:
-    group: balance-transfer-producer-group
+    group: user-balance-producer-group
   consumer:
-    group: balance-transfer-settlement-consumer-group
-  topic:
-    events: balance-transfer-events
+    group: user-balance-consumer-group
+  topics:
+    pending-transfer: pending-transfer
 
 server:
   port: 8080

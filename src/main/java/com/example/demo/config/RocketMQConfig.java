@@ -14,7 +14,7 @@ public class RocketMQConfig {
 	public TransactionMQProducer transactionMQProducer(
 			RocketMQProperties properties,
 			TransferTransactionListener transactionListener) throws MQClientException {
-		TransactionMQProducer producer = new TransactionMQProducer(properties.getProducer().getGroup());
+		final var producer = new TransactionMQProducer(properties.getProducer().getGroup());
 		producer.setNamesrvAddr(properties.getNameServer());
 		producer.setTransactionListener(transactionListener);
 		producer.start();

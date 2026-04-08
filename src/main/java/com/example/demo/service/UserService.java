@@ -9,6 +9,7 @@ import com.example.demo.dto.CreateUserRequest;
 import com.example.demo.dto.UserBalanceResponse;
 import com.example.demo.dto.UserResponse;
 import com.example.demo.exception.ApiException;
+import com.example.demo.exception.ErrorCode;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.cache.UserCacheService;
 
@@ -27,7 +28,7 @@ public class UserService {
 	@CacheEvict(cacheNames = UserCacheService.BALANCES, key = "#request.userId")
 	public UserResponse createUser(CreateUserRequest request) {
 		if (userRepository.existsByUserId(request.userId())) {
-			throw new ApiException(HttpStatus.CONFLICT, "USER_ALREADY_EXISTS",
+			throw new ApiException(HttpStatus.CONFLICT, ErrorCode.USER_ALREADY_EXISTS,
 					"User already exists: " + request.userId());
 		}
 		userRepository.insert(request.userId(), request.initialBalance());
@@ -37,7 +38,7 @@ public class UserService {
 	public UserBalanceResponse getBalance(String userId) {
 		Long balance = userBalanceService.getBalanceOrNull(userId);
 		if (balance == null) {
-			throw new ApiException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "User not found: " + userId);
+			throw new ApiException(HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
 		}
 		return new UserBalanceResponse(userId, balance);
 	}

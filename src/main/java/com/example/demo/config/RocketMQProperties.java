@@ -21,7 +21,7 @@ public class RocketMQProperties {
 
 	@Valid
 	@NotNull
-	private Topic topic;
+	private Topics topics;
 
 	@Valid
 	@NotNull
@@ -43,12 +43,12 @@ public class RocketMQProperties {
 		this.producer = producer;
 	}
 
-	public Topic getTopic() {
-		return topic;
+	public Topics getTopics() {
+		return topics;
 	}
 
-	public void setTopic(Topic topic) {
-		this.topic = topic;
+	public void setTopics(Topics topics) {
+		this.topics = topics;
 	}
 
 	public Consumer getConsumer() {
@@ -73,17 +73,17 @@ public class RocketMQProperties {
 		}
 	}
 
-	public static class Topic {
+	public static class Topics {
 
 		@NotBlank
-		private String events;
+		private String pendingTransfer;
 
-		public String getEvents() {
-			return events;
+		public String getPendingTransfer() {
+			return pendingTransfer;
 		}
 
-		public void setEvents(String events) {
-			this.events = events;
+		public void setPendingTransfer(String pendingTransfer) {
+			this.pendingTransfer = pendingTransfer;
 		}
 	}
 
