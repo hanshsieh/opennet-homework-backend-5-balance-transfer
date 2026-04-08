@@ -14,8 +14,10 @@ import com.example.demo.dto.UserBalanceResponse;
 import com.example.demo.dto.UserResponse;
 import com.example.demo.service.UserService;
 
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -27,13 +29,13 @@ public class UserController {
 	}
 
 	@PostMapping
-	public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
+	public ResponseEntity<UserResponse> createUser(@Validated @RequestBody CreateUserRequest request) {
 		UserResponse body = userService.createUser(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(body);
 	}
 
 	@GetMapping("/{userId}/balance")
-	public UserBalanceResponse getBalance(@PathVariable String userId) {
+	public UserBalanceResponse getBalance(@PathVariable @NotBlank String userId) {
 		return userService.getBalance(userId);
 	}
 }

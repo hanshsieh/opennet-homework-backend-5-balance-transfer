@@ -14,12 +14,11 @@ import org.springframework.validation.annotation.Validated;
 import com.example.demo.dto.PagedTransferResponse;
 import com.example.demo.dto.TransferRequest;
 import com.example.demo.dto.TransferResponse;
-import com.example.demo.exception.ApiException;
 import com.example.demo.service.TransferService;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 
 @Validated
 @RestController
@@ -33,25 +32,21 @@ public class TransferController {
 	}
 
 	@PostMapping
-	public ResponseEntity<TransferResponse> transfer(@Valid @RequestBody TransferRequest request) {
+	public ResponseEntity<TransferResponse> transfer(@Validated @RequestBody TransferRequest request) {
 		TransferResponse body = transferService.transfer(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(body);
 	}
 
 	@GetMapping
 	public PagedTransferResponse listTransfers(
-			@RequestParam String userId,
+			@RequestParam @NotBlank String userId,
 			@RequestParam(defaultValue = "0") @Min(0) int page,
-			@RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
-		if (userId.isBlank()) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "MISSING_USER_ID",
-					"Query parameter userId is required");
-		}
+			@RequestParam(defaultValue = "20") @Min(0) @Max(100) int size) {
 		return transferService.listTransfers(userId, page, size);
 	}
 
 	@PostMapping("/{transferId}/cancel")
-	public TransferResponse cancel(@PathVariable String transferId) {
+	public TransferResponse cancel(@PathVariable @NotBlank String transferId) {
 		return transferService.cancelTransfer(transferId);
 	}
 }

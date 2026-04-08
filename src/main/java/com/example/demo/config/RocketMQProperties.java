@@ -1,15 +1,27 @@
 package com.example.demo.config;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
 @ConfigurationProperties(prefix = "rocketmq")
+@Component
+@Validated
 public class RocketMQProperties {
 
-	private String nameServer = "127.0.0.1:9876";
+	@NotBlank
+	private String nameServer;
 
-	private Producer producer = new Producer();
+	@Valid
+	@NotNull
+	private Producer producer;
 
-	private Topic topic = new Topic();
+	@Valid
+	@NotNull
+	private Topic topic;
 
 	public String getNameServer() {
 		return nameServer;
@@ -37,7 +49,8 @@ public class RocketMQProperties {
 
 	public static class Producer {
 
-		private String group = "default-producer-group";
+		@NotBlank
+		private String group;
 
 		public String getGroup() {
 			return group;
@@ -50,7 +63,8 @@ public class RocketMQProperties {
 
 	public static class Topic {
 
-		private String events = "balance-transfer-events";
+		@NotBlank
+		private String events;
 
 		public String getEvents() {
 			return events;
