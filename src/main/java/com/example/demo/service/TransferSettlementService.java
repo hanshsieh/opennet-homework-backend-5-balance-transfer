@@ -66,14 +66,8 @@ public class TransferSettlementService {
 		}
 		final long fromBalanceAfterTransfer = fromUser.getBalance() - transfer.amount();
 		final long toBalanceAfterTransfer = toUser.getBalance() + transfer.amount();
-		final var fromUpdated = userRepository.overwriteBalance(transfer.fromUserId(), fromBalanceAfterTransfer);
-		if (fromUpdated != 1) {
-			throw new IllegalStateException("Debit overwrite failed for transfer " + transferId);
-		}
-		final var toUpdated = userRepository.overwriteBalance(transfer.toUserId(), toBalanceAfterTransfer);
-		if (toUpdated != 1) {
-			throw new IllegalStateException("Credit overwrite failed for transfer " + transferId);
-		}
+		fromUser.setBalance(fromBalanceAfterTransfer);
+		toUser.setBalance(toBalanceAfterTransfer);
 		final var updated = transferRepository.updateStatus(transfer.id(), TransferStatus.SETTLED);
 		if (updated != 1) {
 			throw new IllegalStateException("Settlement status update failed for transfer " + transferId);

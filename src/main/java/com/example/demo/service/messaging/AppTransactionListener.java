@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.example.demo.repository.TransferRepository;
-import com.example.demo.service.TransferPendingCreationService;
 import com.example.demo.service.TransferService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

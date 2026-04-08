@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.CreateUserRequest;
 import com.example.demo.dto.UserBalanceResponse;
+import com.example.demo.entity.UserEntity;
 import com.example.demo.exception.ApiException;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.repository.UserRepository;
@@ -27,7 +28,10 @@ public class UserService {
 	@CacheEvict(cacheNames = UserCacheService.BALANCES, key = "#request.userId")
 	public String createUser(CreateUserRequest request) {
 		try {
-			userRepository.insert(request.getUserId(), request.getInitialBalance());
+			userRepository.save(UserEntity.builder()
+					.userId(request.getUserId())
+					.balance(request.getInitialBalance())
+					.build());
 		} catch (DataIntegrityViolationException ex) {
 			throw new ApiException(ErrorCode.USER_ALREADY_EXISTS,
 					"User already exists: " + request.getUserId());
