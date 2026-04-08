@@ -9,8 +9,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.example.demo.domain.TransferStatus;
-import com.example.demo.domain.UserEntity;
+import com.example.demo.entity.TransferStatus;
+import com.example.demo.entity.UserEntity;
 import com.example.demo.repository.TransferRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.cache.UserCacheService;

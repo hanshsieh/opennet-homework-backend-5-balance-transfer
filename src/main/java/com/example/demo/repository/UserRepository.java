@@ -9,7 +9,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import com.example.demo.domain.UserEntity;
+import com.example.demo.entity.UserEntity;
 
 @Repository
 public class UserRepository {
@@ -36,11 +36,16 @@ public class UserRepository {
 						.addValue("balance", initialBalance));
 	}
 
-	public Optional<Long> findBalanceByUserId(String userId) {
+	public Optional<UserEntity> findByUserId(String userId) {
 		final var list = jdbc.query(
-				"SELECT balance FROM users WHERE user_id = :userId",
+				"SELECT user_id, balance, created_at, updated_at FROM users WHERE user_id = :userId",
 				new MapSqlParameterSource("userId", userId),
-				(rs, rowNum) -> rs.getLong("balance"));
+				(rs, rowNum) -> UserEntity.builder()
+						.userId(rs.getString("user_id"))
+						.balance(rs.getLong("balance"))
+						.createdAt(toInstant(rs.getTimestamp("created_at")))
+						.updatedAt(toInstant(rs.getTimestamp("updated_at")))
+						.build());
 		return list.stream().findFirst();
 	}
 

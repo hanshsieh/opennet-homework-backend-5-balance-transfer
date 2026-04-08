@@ -1,4 +1,4 @@
-package com.example.demo.messaging;
+package com.example.demo.service.messaging;
 
 import java.nio.charset.StandardCharsets;
 
@@ -12,13 +12,13 @@ import com.example.demo.dto.TransferRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
-public class TransferEventPublisher {
+public class EventPublisher {
 
 	private final TransactionMQProducer producer;
 	private final RocketMQProperties properties;
 	private final ObjectMapper objectMapper;
 
-	public TransferEventPublisher(
+	public EventPublisher(
 			final TransactionMQProducer producer,
 			final RocketMQProperties properties,
 			final ObjectMapper objectMapper) {

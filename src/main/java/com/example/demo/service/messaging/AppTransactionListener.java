@@ -1,4 +1,4 @@
-package com.example.demo.messaging;
+package com.example.demo.service.messaging;
 
 import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.apache.rocketmq.client.producer.TransactionListener;
@@ -10,22 +10,23 @@ import org.springframework.stereotype.Component;
 
 import com.example.demo.repository.TransferRepository;
 import com.example.demo.service.TransferPendingCreationService;
+import com.example.demo.service.TransferService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
-public class TransferTransactionListener implements TransactionListener {
+public class AppTransactionListener implements TransactionListener {
 
-	private static final Logger log = LoggerFactory.getLogger(TransferTransactionListener.class);
+	private static final Logger log = LoggerFactory.getLogger(AppTransactionListener.class);
 
-	private final TransferPendingCreationService pendingCreationService;
 	private final TransferRepository transferRepository;
+	private final TransferService transferService;
 	private final ObjectMapper objectMapper;
 
-	public TransferTransactionListener(
-			TransferPendingCreationService pendingCreationService,
+	public AppTransactionListener(
+			TransferService transferService,
 			TransferRepository transferRepository,
 			ObjectMapper objectMapper) {
-		this.pendingCreationService = pendingCreationService;
+		this.transferService = transferService;
 		this.transferRepository = transferRepository;
 		this.objectMapper = objectMapper;
 	}
@@ -33,13 +34,7 @@ public class TransferTransactionListener implements TransactionListener {
 	@Override
 	public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
 		PendingTransferLocalArgs args = (PendingTransferLocalArgs) arg;
-		try {
-			pendingCreationService.createPending(args);
-			return LocalTransactionState.COMMIT_MESSAGE;
-		} catch (Exception e) {
-			log.error("executeLocalTransaction failed for transfer {}", args.getTransferId(), e);
-			return LocalTransactionState.ROLLBACK_MESSAGE;
-		}
+		return transferService.createTransferLocally(args);
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package com.example.demo.messaging;
+package com.example.demo.service.messaging;
 
 import lombok.Builder;
 import lombok.Getter;

@@ -6,30 +6,33 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.rocketmq.client.producer.LocalTransactionState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.demo.domain.TransferEntity;
-import com.example.demo.domain.TransferStatus;
 import com.example.demo.dto.PagedTransferResponse;
 import com.example.demo.dto.TransferRequest;
 import com.example.demo.dto.TransferResponse;
+import com.example.demo.entity.TransferEntity;
+import com.example.demo.entity.TransferStatus;
 import com.example.demo.exception.ApiException;
 import com.example.demo.exception.ErrorCode;
-import com.example.demo.messaging.TransferEventPublisher;
 import com.example.demo.repository.TransferRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.service.messaging.EventPublisher;
+import com.example.demo.service.messaging.PendingTransferLocalArgs;
 
 @Service
 public class TransferService {
 	private static final Duration CANCEL_WINDOW = Duration.ofMinutes(10);
-
+	private static final Logger log = LoggerFactory.getLogger(TransferService.class);
 	private final UserRepository userRepository;
 	private final TransferRepository transferRepository;
-	private final TransferEventPublisher eventPublisher;
+	private final EventPublisher eventPublisher;
 
 	public TransferService(UserRepository userRepository, TransferRepository transferRepository,
-			TransferEventPublisher eventPublisher) {
+			EventPublisher eventPublisher) {
 		this.userRepository = userRepository;
 		this.transferRepository = transferRepository;
 		this.eventPublisher = eventPublisher;
@@ -86,6 +89,18 @@ public class TransferService {
 		}
 		transferRepository.updateStatus(transferId, TransferStatus.CANCELLED);
 		return toResponse(transferRepository.findById(transferId).orElseThrow());
+	}
+
+	@Transactional
+	public LocalTransactionState createTransferLocally(PendingTransferLocalArgs args) {
+		try {
+			transferRepository.insert(args.getTransferId(), args.getFromUserId(), args.getToUserId(), args.getAmount(),
+				TransferStatus.PENDING);
+			return LocalTransactionState.COMMIT_MESSAGE;
+		} catch (Exception e) {
+			log.error("Failed to create transfer locally: {}", args.getTransferId(), e);
+			return LocalTransactionState.ROLLBACK_MESSAGE;
+		}
 	}
 
 	private static void validateTransferRequest(TransferRequest request) {

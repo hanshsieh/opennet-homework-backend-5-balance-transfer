@@ -11,8 +11,8 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import com.example.demo.domain.TransferEntity;
-import com.example.demo.domain.TransferStatus;
+import com.example.demo.entity.TransferEntity;
+import com.example.demo.entity.TransferStatus;
 
 @Repository
 public class TransferRepository {

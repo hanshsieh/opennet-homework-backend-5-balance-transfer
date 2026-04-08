@@ -5,7 +5,7 @@ import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.example.demo.messaging.TransferTransactionListener;
+import com.example.demo.service.messaging.AppTransactionListener;
 
 @Configuration
 public class RocketMQConfig {
@@ -13,7 +13,7 @@ public class RocketMQConfig {
 	@Bean(destroyMethod = "shutdown")
 	public TransactionMQProducer transactionMQProducer(
 			RocketMQProperties properties,
-			TransferTransactionListener transactionListener) throws MQClientException {
+			AppTransactionListener transactionListener) throws MQClientException {
 		final var producer = new TransactionMQProducer(properties.getProducer().getGroup());
 		producer.setNamesrvAddr(properties.getNameServer());
 		producer.setTransactionListener(transactionListener);

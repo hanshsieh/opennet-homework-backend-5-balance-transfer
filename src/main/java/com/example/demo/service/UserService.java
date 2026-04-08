@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,19 +26,18 @@ public class UserService {
 	@Transactional
 	@CacheEvict(cacheNames = UserCacheService.BALANCES, key = "#request.userId")
 	public String createUser(CreateUserRequest request) {
-		if (userRepository.existsByUserId(request.getUserId())) {
+		try {
+			userRepository.insert(request.getUserId(), request.getInitialBalance());
+		} catch (DataIntegrityViolationException ex) {
 			throw new ApiException(ErrorCode.USER_ALREADY_EXISTS,
 					"User already exists: " + request.getUserId());
 		}
-		userRepository.insert(request.getUserId(), request.getInitialBalance());
 		return request.getUserId();
 	}
 
 	public UserBalanceResponse getBalance(String userId) {
-		Long balance = userBalanceService.getBalanceOrNull(userId);
-		if (balance == null) {
-			throw new ApiException(ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
-		}
+		final var balance = userBalanceService.getBalance(userId)
+				.orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "User not found: " + userId));
 		return UserBalanceResponse.builder()
 				.userId(userId)
 				.balance(balance)
