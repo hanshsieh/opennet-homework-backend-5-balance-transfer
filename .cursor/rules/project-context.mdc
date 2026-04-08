@@ -1,0 +1,103 @@
+---
+description: Project purpose, features, and architecture
+alwaysApply: true
+---
+
+# Purpose
+
+It's a service that support **atomic transfers** between users. 
+
+# Supported Features
+
+- **Create user**
+  - Endpoint: `POST /users`
+  - Unique `userId`, initial balance in MySQL
+- **Get user balance**
+  - Endpoint: `GET /users/{userId}/balance`
+  - Redis-backed (`userBalances`, TTL in `application.yaml`)
+- **Create Transfer**
+  - Endpoint: `POST /transfers`
+  - Transfer amount from one user to the other.
+  - Record the transaction atomically, and asynchronously credit and debit.
+- **List transfer history**
+  - Endpoint: `GET /transfers?userId={userId}`
+  - Paginated, recent-first
+- **Cancel transfer**
+  - Endpoint: `POST /transfers/{transferId}/cancel`
+  - Cancel a transfer is not yet settled and created within 10 min.
+
+# Source structure
+- `init.sql`: DB schema
+- `docker-compose.yaml`: Create local dev env
+
+# Architecture
+
+- App Server
+  - Handle user requests
+  - Consume RocketMQ events
+- Redis
+  - Caching user balance
+- MySQL
+  - Main storage
+- RocketMQ
+  - Asynchronously apply the transfer
+
+# Sequence Diagram
+
+## Get User Balance
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client as Client
+    participant App as App Server
+    participant Redis as Redis
+    participant DB as MySQL
+
+    Client->>App: GET /users/{userId}/balance
+    App->>Redis: GET userBalances:{userId}
+    alt Cache hit
+        Redis-->>App: balance
+        App-->>Client: 200 OK (balance)
+    else Cache miss
+        Redis-->>App: nil
+        App->>DB: Query user balance by userId
+        DB-->>App: balance
+        App->>Redis: SETEX userBalances:{userId} balance (TTL)
+        App-->>Client: 200 OK (balance)
+    end
+```
+
+
+
+## Create Transfer
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client as Client
+    participant App as App Server
+    participant DB as MySQL
+    participant MQ as RocketMQ
+    participant Redis as Redis
+
+    Client->>App: POST /transfers
+    App->>DB: Insert transfer (status = PENDING)
+    DB-->>App: Done
+    App->>MQ: Publish TransferCreated event (transferId)
+    App-->>Client: 202 Accepted / transferId
+
+    MQ-->>App: Deliver TransferCreated event
+    App->>DB: Load transfer by transferId
+    alt transfer status == PENDING
+        App->>DB: Debit source user balance
+        App->>DB: Credit target user balance
+        App->>DB: Update transfer status = SETTLED
+        DB-->>App: Transaction committed
+        App->>Redis: DEL userBalances:{fromUserId}
+        App->>Redis: DEL userBalances:{toUserId}
+    else transfer status != PENDING
+        App-->>App: Ignore / no-op
+    end
+```
+
