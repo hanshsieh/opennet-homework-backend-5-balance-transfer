@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
 				.collect(Collectors.joining("; "));
 		return ResponseEntity
 				.status(HttpStatus.BAD_REQUEST)
-				.body(new ErrorResponse(msg, "VALIDATION_ERROR"));
+				.body(new ErrorResponse(msg, ErrorCode.VALIDATION_ERROR.name()));
 	}
 
 	@ExceptionHandler(ConstraintViolationException.class)
@@ -37,6 +37,6 @@ public class GlobalExceptionHandler {
 				.collect(Collectors.joining("; "));
 		return ResponseEntity
 				.status(HttpStatus.BAD_REQUEST)
-				.body(new ErrorResponse(msg, "VALIDATION_ERROR"));
+				.body(new ErrorResponse(msg, ErrorCode.VALIDATION_ERROR.name()));
 	}
 }

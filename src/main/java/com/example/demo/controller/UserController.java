@@ -30,7 +30,7 @@ public class UserController {
 
 	@PostMapping
 	public ResponseEntity<UserResponse> createUser(@Validated @RequestBody CreateUserRequest request) {
-		UserResponse body = userService.createUser(request);
+		final var body = userService.createUser(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(body);
 	}
 

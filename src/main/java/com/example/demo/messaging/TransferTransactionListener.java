@@ -37,7 +37,7 @@ public class TransferTransactionListener implements TransactionListener {
 			pendingCreationService.createPending(args);
 			return LocalTransactionState.COMMIT_MESSAGE;
 		} catch (Exception e) {
-			log.error("executeLocalTransaction failed for transfer {}", args.transferId(), e);
+			log.error("executeLocalTransaction failed for transfer {}", args.getTransferId(), e);
 			return LocalTransactionState.ROLLBACK_MESSAGE;
 		}
 	}

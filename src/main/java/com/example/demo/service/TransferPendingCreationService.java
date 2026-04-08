@@ -21,7 +21,7 @@ public class TransferPendingCreationService {
 
 	@Transactional
 	public void createPending(PendingTransferLocalArgs args) {
-		transferRepository.insert(args.transferId(), args.fromUserId(), args.toUserId(), args.amount(),
+		transferRepository.insert(args.getTransferId(), args.getFromUserId(), args.getToUserId(), args.getAmount(),
 				TransferStatus.PENDING);
 	}
 }
