@@ -27,17 +27,17 @@ public class TransferEventPublisher {
 		this.objectMapper = objectMapper;
 	}
 
-	public TransactionSendResult sendPendingTransferTransactional(String transferId, TransferRequest request)
+	public TransactionSendResult sendPendingTransfer(String transferId, TransferRequest request)
 			throws Exception {
-		byte[] body = objectMapper.writeValueAsString(new TransferIdPayload(transferId))
+		final var body = objectMapper.writeValueAsString(new TransferIdPayload(transferId))
 				.getBytes(StandardCharsets.UTF_8);
-		Message msg = new Message(properties.getTopics().getPendingTransfer(), body);
-		return producer.sendMessageInTransaction(msg,
-				PendingTransferLocalArgs.builder()
-						.transferId(transferId)
-						.fromUserId(request.getFromUserId())
-						.toUserId(request.getToUserId())
-						.amount(request.getAmount())
-						.build());
+		final var msg = new Message(properties.getTopics().getPendingTransfer(), body);
+		final var localArgs = PendingTransferLocalArgs.builder()
+				.transferId(transferId)
+				.fromUserId(request.getFromUserId())
+				.toUserId(request.getToUserId())
+				.amount(request.getAmount())
+				.build();
+		return producer.sendMessageInTransaction(msg, localArgs);
 	}
 }

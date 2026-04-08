@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.rocketmq.client.producer.LocalTransactionState;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +22,6 @@ import com.example.demo.repository.UserRepository;
 
 @Service
 public class TransferService {
-
 	private static final Duration CANCEL_WINDOW = Duration.ofMinutes(10);
 
 	private final UserRepository userRepository;
@@ -39,37 +37,28 @@ public class TransferService {
 
 	public TransferResponse transfer(TransferRequest request) {
 		validateTransferRequest(request);
-		if (!userRepository.existsByUserId(request.getFromUserId())
-				|| !userRepository.existsByUserId(request.getToUserId())) {
-			throw new ApiException(HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND,
-					"One or both users do not exist");
-		}
 		final var id = UUID.randomUUID().toString();
 		try {
-			var sendResult = eventPublisher.sendPendingTransferTransactional(id, request);
-			LocalTransactionState state = sendResult.getLocalTransactionState();
-			if (state == LocalTransactionState.ROLLBACK_MESSAGE) {
-				throw new ApiException(HttpStatus.CONFLICT, ErrorCode.TRANSFER_CREATE_FAILED,
-						"Could not persist pending transfer (e.g. invalid users or database error)");
-			}
+			final var sendResult = eventPublisher.sendPendingTransfer(id, request);
+			final var state = sendResult.getLocalTransactionState();
 			if (state != LocalTransactionState.COMMIT_MESSAGE) {
-				throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.TRANSFER_STATE_UNCERTAIN,
+				throw new ApiException(ErrorCode.TRANSFER_STATE_UNCERTAIN,
 						"Transfer could not be confirmed; check transfer id: " + id);
 			}
 		} catch (ApiException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.TRANSFER_MQ_ERROR,
-					"Failed to submit transfer: " + e.getMessage());
+			throw new ApiException(ErrorCode.TRANSFER_MQ_ERROR,
+					"Failed to submit transfer", e);
 		}
 		return toResponse(transferRepository.findById(id).orElseThrow(() -> new ApiException(
-				HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.TRANSFER_ROW_MISSING,
+				ErrorCode.TRANSFER_ROW_MISSING,
 				"Transfer row missing after commit: " + id)));
 	}
 
 	public PagedTransferResponse listTransfers(String userId, int page, int size) {
 		if (!userRepository.existsByUserId(userId)) {
-			throw new ApiException(HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
+			throw new ApiException(ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
 		}
 		TransferRepository.PagedTransfers pageResult = transferRepository.findByUserInvolved(userId, page, size);
 		List<TransferResponse> content = pageResult.content().stream().map(this::toResponse).toList();
@@ -84,17 +73,17 @@ public class TransferService {
 	@Transactional
 	public TransferResponse cancelTransfer(String transferId) {
 		TransferEntity transfer = transferRepository.findByIdForUpdate(transferId)
-				.orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, ErrorCode.TRANSFER_NOT_FOUND,
+				.orElseThrow(() -> new ApiException(ErrorCode.TRANSFER_NOT_FOUND,
 						"Transfer not found: " + transferId));
 		if (transfer.status() == TransferStatus.CANCELLED) {
 			return toResponse(transfer);
 		}
 		if (transfer.status() != TransferStatus.PENDING) {
-			throw new ApiException(HttpStatus.CONFLICT, ErrorCode.TRANSFER_NOT_PENDING,
+			throw new ApiException(ErrorCode.TRANSFER_NOT_PENDING,
 					"Transfer is not pending: " + transferId);
 		}
 		if (transfer.createdAt().plus(CANCEL_WINDOW).isBefore(Instant.now())) {
-			throw new ApiException(HttpStatus.CONFLICT, ErrorCode.CANCEL_WINDOW_EXPIRED,
+			throw new ApiException(ErrorCode.CANCEL_WINDOW_EXPIRED,
 					"Transfer can only be cancelled within " + CANCEL_WINDOW.toMinutes() + " minutes");
 		}
 		transferRepository.updateStatus(transferId, TransferStatus.CANCELLED);
@@ -103,7 +92,7 @@ public class TransferService {
 
 	private static void validateTransferRequest(TransferRequest request) {
 		if (request.getFromUserId().equals(request.getToUserId())) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_TRANSFER,
+			throw new ApiException(ErrorCode.INVALID_TRANSFER,
 					"fromUserId and toUserId must differ");
 		}
 	}

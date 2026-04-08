@@ -1,7 +1,6 @@
 package com.example.demo.service;
 
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +27,7 @@ public class UserService {
 	@CacheEvict(cacheNames = UserCacheService.BALANCES, key = "#request.userId")
 	public UserResponse createUser(CreateUserRequest request) {
 		if (userRepository.existsByUserId(request.getUserId())) {
-			throw new ApiException(HttpStatus.CONFLICT, ErrorCode.USER_ALREADY_EXISTS,
+			throw new ApiException(ErrorCode.USER_ALREADY_EXISTS,
 					"User already exists: " + request.getUserId());
 		}
 		userRepository.insert(request.getUserId(), request.getInitialBalance());
@@ -41,7 +40,7 @@ public class UserService {
 	public UserBalanceResponse getBalance(String userId) {
 		Long balance = userBalanceService.getBalanceOrNull(userId);
 		if (balance == null) {
-			throw new ApiException(HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
+			throw new ApiException(ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
 		}
 		return UserBalanceResponse.builder()
 				.userId(userId)
