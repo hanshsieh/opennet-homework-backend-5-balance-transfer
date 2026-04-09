@@ -5,13 +5,13 @@ import java.nio.charset.StandardCharsets;
 import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.apache.rocketmq.client.producer.TransactionSendResult;
 import org.apache.rocketmq.common.message.Message;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import com.example.demo.config.RocketMQProperties;
 import com.example.demo.dto.TransferRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Component
+@Service
 public class EventPublisher {
 
 	private final TransactionMQProducer producer;
