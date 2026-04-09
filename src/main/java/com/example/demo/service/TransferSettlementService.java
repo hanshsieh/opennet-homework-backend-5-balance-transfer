@@ -13,7 +13,6 @@ import com.example.demo.entity.TransferStatus;
 import com.example.demo.entity.UserEntity;
 import com.example.demo.repository.TransferRepository;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.service.cache.UserCacheService;
 
 @Service
 public class TransferSettlementService {

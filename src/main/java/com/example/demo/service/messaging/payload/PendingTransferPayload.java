@@ -1,4 +1,4 @@
-package com.example.demo.service.messaging;
+package com.example.demo.service.messaging.payload;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

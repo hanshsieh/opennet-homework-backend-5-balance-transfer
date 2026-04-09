@@ -1,4 +1,4 @@
-package com.example.demo.service.cache;
+package com.example.demo.service;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Component;

@@ -6,7 +6,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.repository.UserRepository;
-import com.example.demo.service.cache.UserCacheService;
 
 @Service
 public class UserBalanceService {

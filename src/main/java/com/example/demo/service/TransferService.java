@@ -18,17 +18,17 @@ import com.example.demo.exception.ApiException;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.repository.TransferRepository;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.service.messaging.EventPublisher;
+import com.example.demo.service.messaging.MessagePublisher;
 
 @Service
 public class TransferService {
 	private static final Duration CANCEL_WINDOW = Duration.ofMinutes(10);
 	private final UserRepository userRepository;
 	private final TransferRepository transferRepository;
-	private final EventPublisher eventPublisher;
+	private final MessagePublisher eventPublisher;
 
 	public TransferService(UserRepository userRepository, TransferRepository transferRepository,
-			EventPublisher eventPublisher) {
+			MessagePublisher eventPublisher) {
 		this.userRepository = userRepository;
 		this.transferRepository = transferRepository;
 		this.eventPublisher = eventPublisher;

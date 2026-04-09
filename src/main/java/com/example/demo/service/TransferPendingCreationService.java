@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.entity.TransferEntity;
 import com.example.demo.entity.TransferStatus;
 import com.example.demo.repository.TransferRepository;
-import com.example.demo.service.messaging.PendingTransferLocalArgs;
+import com.example.demo.service.messaging.localargs.PendingTransferLocalArgs;
 
 /**
  * Runs inside RocketMQ {@code executeLocalTransaction}: insert PENDING transfer only.

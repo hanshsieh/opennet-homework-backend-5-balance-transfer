@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.entity.TransferEntity;
 import com.example.demo.entity.TransferStatus;
 import com.example.demo.repository.TransferRepository;
+import com.example.demo.service.messaging.localargs.PendingTransferLocalArgs;
+import com.example.demo.service.messaging.payload.PendingTransferPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component

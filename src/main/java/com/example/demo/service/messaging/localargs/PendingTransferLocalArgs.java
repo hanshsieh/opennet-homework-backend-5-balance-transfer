@@ -1,4 +1,4 @@
-package com.example.demo.service.messaging;
+package com.example.demo.service.messaging.localargs;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -7,7 +7,6 @@ import lombok.Getter;
 @Getter
 @Builder
 public class PendingTransferLocalArgs {
-
 	private final String transferId;
 	private final String fromUserId;
 	private final String toUserId;

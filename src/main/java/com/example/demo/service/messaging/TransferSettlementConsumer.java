@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.demo.config.RocketMQProperties;
 import com.example.demo.service.TransferSettlementService;
+import com.example.demo.service.messaging.payload.PendingTransferPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;

@@ -9,16 +9,18 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.config.RocketMQProperties;
 import com.example.demo.dto.TransferRequest;
+import com.example.demo.service.messaging.localargs.PendingTransferLocalArgs;
+import com.example.demo.service.messaging.payload.PendingTransferPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
-public class EventPublisher {
+public class MessagePublisher {
 
 	private final TransactionMQProducer producer;
 	private final RocketMQProperties properties;
 	private final ObjectMapper objectMapper;
 
-	public EventPublisher(
+	public MessagePublisher(
 			final TransactionMQProducer producer,
 			final RocketMQProperties properties,
 			final ObjectMapper objectMapper) {

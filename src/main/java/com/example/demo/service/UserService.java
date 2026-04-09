@@ -11,7 +11,6 @@ import com.example.demo.entity.UserEntity;
 import com.example.demo.exception.ApiException;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.service.cache.UserCacheService;
 
 @Service
 public class UserService {

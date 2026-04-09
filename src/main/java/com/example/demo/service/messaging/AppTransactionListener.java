@@ -23,7 +23,7 @@ public class AppTransactionListener implements TransactionListener {
 	public AppTransactionListener(List<TaggedLocalTransactionListener> taggedListeners) {
 		this.listenersByTag = taggedListeners.stream()
 				.collect(Collectors.toMap(TaggedLocalTransactionListener::tag, Function.identity(), (a, b) -> {
-					throw new IllegalStateException("Duplicate transaction listener tag: " + a.tag());
+					throw new IllegalArgumentException("Duplicate transaction listener tag: " + a.tag());
 				}));
 	}
 
