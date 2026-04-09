@@ -23,10 +23,6 @@ public class RocketMQProperties {
 
 	@Valid
 	@NotNull
-	private Topics topics;
-
-	@Valid
-	@NotNull
 	private Consumer consumer;
 
 	@Data
@@ -34,13 +30,6 @@ public class RocketMQProperties {
 
 		@NotBlank
 		private String group;
-	}
-
-	@Data
-	public static class Topics {
-
-		@NotBlank
-		private String pendingTransfer;
 	}
 
 	@Data

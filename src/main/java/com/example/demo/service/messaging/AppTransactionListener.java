@@ -13,17 +13,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.example.demo.config.RocketMQTopic;
+
 @Component
 public class AppTransactionListener implements TransactionListener {
 
 	private static final Logger log = LoggerFactory.getLogger(AppTransactionListener.class);
 
-	private final Map<String, TaggedLocalTransactionListener> listenersByTag;
+	private final Map<RocketMQTopic, TopicLocalTransactionListener> listenersByTopic;
 
-	public AppTransactionListener(List<TaggedLocalTransactionListener> taggedListeners) {
-		this.listenersByTag = taggedListeners.stream()
-				.collect(Collectors.toMap(TaggedLocalTransactionListener::tag, Function.identity(), (a, b) -> {
-					throw new IllegalArgumentException("Duplicate transaction listener tag: " + a.tag());
+	public AppTransactionListener(List<TopicLocalTransactionListener> topicListeners) {
+		this.listenersByTopic = topicListeners.stream()
+				.collect(Collectors.toMap(TopicLocalTransactionListener::topic, Function.identity(), (a, b) -> {
+					throw new IllegalArgumentException("Duplicate transaction listener topic: " + a.topic());
 				}));
 	}
 
@@ -31,7 +33,7 @@ public class AppTransactionListener implements TransactionListener {
 	public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
 		final var listener = resolve(msg);
 		if (listener == null) {
-			log.error("No TaggedLocalTransactionListener for tag [{}]", msg.getTags());
+			log.error("No TopicLocalTransactionListener for topic [{}]", msg.getTopic());
 			return LocalTransactionState.ROLLBACK_MESSAGE;
 		}
 		return listener.executeLocalTransaction(msg, arg);
@@ -41,17 +43,17 @@ public class AppTransactionListener implements TransactionListener {
 	public LocalTransactionState checkLocalTransaction(MessageExt msg) {
 		final var listener = resolve(msg);
 		if (listener == null) {
-			log.error("No TaggedLocalTransactionListener for check, tag [{}]", msg.getTags());
+			log.error("No TopicLocalTransactionListener for check, topic [{}]", msg.getTopic());
 			return LocalTransactionState.UNKNOW;
 		}
 		return listener.checkLocalTransaction(msg);
 	}
 
-	private TaggedLocalTransactionListener resolve(Message msg) {
-		final var tag = msg.getTags();
-		if (tag == null || tag.isBlank()) {
+	private TopicLocalTransactionListener resolve(Message msg) {
+		final var topic = RocketMQTopic.fromTopicName(msg.getTopic());
+		if (topic == null) {
 			return null;
 		}
-		return listenersByTag.get(tag);
+		return listenersByTopic.get(topic);
 	}
 }

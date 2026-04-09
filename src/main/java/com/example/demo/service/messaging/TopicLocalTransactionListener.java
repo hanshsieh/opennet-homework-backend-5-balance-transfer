@@ -4,12 +4,14 @@ import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
 
-/**
- * RocketMQ transactional half-message handler scoped by {@link Message#getTags()}.
- */
-public interface TaggedLocalTransactionListener {
+import com.example.demo.config.RocketMQTopic;
 
-	String tag();
+/**
+ * RocketMQ transactional half-message handler scoped by {@link Message#getTopic()}.
+ */
+public interface TopicLocalTransactionListener {
+
+	RocketMQTopic topic();
 
 	LocalTransactionState executeLocalTransaction(Message msg, Object arg);
 

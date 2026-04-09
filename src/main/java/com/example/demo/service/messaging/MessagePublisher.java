@@ -7,7 +7,7 @@ import org.apache.rocketmq.client.producer.TransactionSendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.config.RocketMQProperties;
+import com.example.demo.config.RocketMQTopic;
 import com.example.demo.dto.TransferRequest;
 import com.example.demo.service.messaging.localargs.PendingTransferLocalArgs;
 import com.example.demo.service.messaging.payload.PendingTransferPayload;
@@ -17,15 +17,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class MessagePublisher {
 
 	private final TransactionMQProducer producer;
-	private final RocketMQProperties properties;
 	private final ObjectMapper objectMapper;
 
 	public MessagePublisher(
 			final TransactionMQProducer producer,
-			final RocketMQProperties properties,
 			final ObjectMapper objectMapper) {
 		this.producer = producer;
-		this.properties = properties;
 		this.objectMapper = objectMapper;
 	}
 
@@ -35,8 +32,7 @@ public class MessagePublisher {
 				.transferId(transferId)
 				.build())
 				.getBytes(StandardCharsets.UTF_8);
-		final var msg = new Message(properties.getTopics().getPendingTransfer(), body);
-		msg.setTags(TransferTransactionListener.TAG);
+		final var msg = new Message(RocketMQTopic.PENDING_TRANSFER.getTopicName(), body);
 		final var localArgs = PendingTransferLocalArgs.builder()
 				.transferId(transferId)
 				.fromUserId(request.getFromUserId())

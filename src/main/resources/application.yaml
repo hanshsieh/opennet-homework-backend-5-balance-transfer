@@ -22,8 +22,6 @@ rocketmq:
     group: user-balance-producer-group
   consumer:
     group: user-balance-consumer-group
-  topics:
-    pending-transfer: pending-transfer
 
 server:
   port: 8080

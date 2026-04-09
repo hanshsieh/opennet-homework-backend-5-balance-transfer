@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.example.demo.config.RocketMQProperties;
+import com.example.demo.config.RocketMQTopic;
 import com.example.demo.service.TransferSettlementService;
 import com.example.demo.service.messaging.payload.PendingTransferPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,7 +41,7 @@ public class TransferSettlementConsumer {
 	public void start() throws MQClientException {
 		consumer = new DefaultMQPushConsumer(properties.getConsumer().getGroup());
 		consumer.setNamesrvAddr(properties.getNameServer());
-		consumer.subscribe(properties.getTopics().getPendingTransfer(), "*");
+		consumer.subscribe(RocketMQTopic.PENDING_TRANSFER.getTopicName(), "*");
 		consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
 			for (var msg : msgs) {
 				try {

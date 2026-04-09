@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.config.RocketMQTopic;
 import com.example.demo.entity.TransferEntity;
 import com.example.demo.entity.TransferStatus;
 import com.example.demo.repository.TransferRepository;
@@ -16,9 +17,7 @@ import com.example.demo.service.messaging.payload.PendingTransferPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
-public class TransferTransactionListener implements TaggedLocalTransactionListener {
-
-	public static final String TAG = "PENDING_TRANSFER";
+public class TransferTransactionListener implements TopicLocalTransactionListener {
 
 	private static final Logger log = LoggerFactory.getLogger(TransferTransactionListener.class);
 
@@ -33,8 +32,8 @@ public class TransferTransactionListener implements TaggedLocalTransactionListen
 	}
 
 	@Override
-	public String tag() {
-		return TAG;
+	public RocketMQTopic topic() {
+		return RocketMQTopic.PENDING_TRANSFER;
 	}
 
 	@Override
