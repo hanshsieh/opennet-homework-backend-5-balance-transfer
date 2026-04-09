@@ -12,17 +12,14 @@ import com.example.demo.dto.UserBalanceResponse;
 import com.example.demo.entity.UserEntity;
 import com.example.demo.exception.ApiException;
 import com.example.demo.exception.ErrorCode;
-import com.example.demo.repository.UserRepository;
 
 @Service
 public class UserService {
 
-	private final UserRepository userRepository;
 	private final UserBalanceService userBalanceService;
 	private final EntityManager entityManager;
 
-	public UserService(UserRepository userRepository, UserBalanceService userBalanceService, EntityManager entityManager) {
-		this.userRepository = userRepository;
+	public UserService(UserBalanceService userBalanceService, EntityManager entityManager) {
 		this.userBalanceService = userBalanceService;
 		this.entityManager = entityManager;
 	}

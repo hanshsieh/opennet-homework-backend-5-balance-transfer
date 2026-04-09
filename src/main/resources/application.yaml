@@ -16,7 +16,6 @@ spring:
       port: 6379
   cache:
     type: redis
-    cache-names: userBalances
     redis:
       time-to-live: 60s
 
