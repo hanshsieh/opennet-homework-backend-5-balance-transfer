@@ -14,15 +14,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PagedTransferResponse {
-	@JsonProperty("content")
-	private List<TransferResponse> content;
+	@JsonProperty("items")
+	private List<TransferResponse> items;
 
-	@JsonProperty("totalElements")
-	private long totalElements;
+	@JsonProperty("total")
+	private long total;
 
-	@JsonProperty("number")
-	private int number;
+	@JsonProperty("pageNumber")
+	private int pageNumber;
 
-	@JsonProperty("size")
-	private int size;
+	@JsonProperty("pageSize")
+	private int pageSize;
 }

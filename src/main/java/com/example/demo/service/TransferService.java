@@ -42,31 +42,31 @@ public class TransferService {
 			final var sendResult = eventPublisher.sendPendingTransfer(id, request);
 			final var state = sendResult.getLocalTransactionState();
 			if (state != LocalTransactionState.COMMIT_MESSAGE) {
-				throw new ApiException(ErrorCode.TRANSFER_STATE_UNCERTAIN,
+				throw new ApiException(ErrorCode.INTERNAL_ERROR,
 						"Transfer could not be confirmed; check transfer id: " + id);
 			}
 		} catch (ApiException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new ApiException(ErrorCode.TRANSFER_MQ_ERROR,
+			throw new ApiException(ErrorCode.INTERNAL_ERROR,
 					"Failed to submit transfer", e);
 		}
 		return id;
 	}
 
-	public PagedTransferResponse listTransfers(String userId, int page, int size) {
+	public PagedTransferResponse listTransfers(String userId, int pageNumber, int pageSize) {
 		if (!userRepository.existsByUserId(userId)) {
 			throw new ApiException(ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
 		}
-		final var pageable = PageRequest.of(page, size);
+		final var pageable = PageRequest.of(pageNumber, pageSize);
 		final var entities = transferRepository.findByFromUserIdOrToUserIdOrderByCreatedAtDesc(userId, userId, pageable);
 		final var totalElements = transferRepository.countByFromUserIdOrToUserId(userId, userId);
-		List<TransferResponse> content = entities.stream().map(this::toResponse).toList();
+		final var items = entities.stream().map(this::toResponse).toList();
 		return PagedTransferResponse.builder()
-				.content(content)
-				.totalElements(totalElements)
-				.number(page)
-				.size(size)
+				.items(items)
+				.total(totalElements)
+				.pageNumber(pageNumber)
+				.pageSize(pageSize)
 				.build();
 	}
 
@@ -79,7 +79,7 @@ public class TransferService {
 			return toResponse(transfer);
 		}
 		if (transfer.getStatus() != TransferStatus.PENDING) {
-			throw new ApiException(ErrorCode.TRANSFER_NOT_PENDING,
+			throw new ApiException(ErrorCode.TRANSFER_STATE_CONFLICT,
 					"Transfer is not pending: " + transferId);
 		}
 		if (transfer.getCreatedAt().plus(CANCEL_WINDOW).isBefore(Instant.now())) {
@@ -92,7 +92,7 @@ public class TransferService {
 
 	private static void validateTransferRequest(TransferRequest request) {
 		if (request.getFromUserId().equals(request.getToUserId())) {
-			throw new ApiException(ErrorCode.INVALID_TRANSFER,
+			throw new ApiException(ErrorCode.VALIDATION_ERROR,
 					"fromUserId and toUserId must differ");
 		}
 	}

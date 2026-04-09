@@ -25,6 +25,14 @@ import lombok.Setter;
 @Entity
 @Table(name = "transfers")
 public class TransferEntity {
+	@Column(name = "created_at", nullable = false, updatable = false)
+	@CreationTimestamp
+	private Instant createdAt;
+
+	@Column(name = "updated_at", nullable = false)
+	@UpdateTimestamp
+	private Instant updatedAt;
+
 	@Id
 	@Column(name = "id", nullable = false, length = 36)
 	private String id;
@@ -41,12 +49,4 @@ public class TransferEntity {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 32)
 	private TransferStatus status;
-
-	@Column(name = "created_at", nullable = false, updatable = false)
-	@CreationTimestamp
-	private Instant createdAt;
-
-	@Column(name = "updated_at", nullable = false)
-	@UpdateTimestamp
-	private Instant updatedAt;
 }
