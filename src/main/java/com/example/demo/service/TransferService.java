@@ -2,7 +2,6 @@ package com.example.demo.service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 import org.apache.rocketmq.client.producer.LocalTransactionState;
@@ -59,8 +58,8 @@ public class TransferService {
 			throw new ApiException(ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
 		}
 		final var pageable = PageRequest.of(pageNumber, pageSize);
-		final var entities = transferRepository.findByFromUserIdOrToUserIdOrderByCreatedAtDesc(userId, userId, pageable);
-		final var totalElements = transferRepository.countByFromUserIdOrToUserId(userId, userId);
+		final var entities = transferRepository.findByUserId(userId, pageable);
+		final var totalElements = transferRepository.countByUserId(userId);
 		final var items = entities.stream().map(this::toResponse).toList();
 		return PagedTransferResponse.builder()
 				.items(items)

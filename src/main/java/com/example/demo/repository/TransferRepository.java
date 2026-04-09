@@ -23,10 +23,10 @@ public interface TransferRepository extends JpaRepository<TransferEntity, String
 	@Query("SELECT t FROM TransferEntity t WHERE t.id = :id")
 	Optional<TransferEntity> findByIdForUpdate(@Param("id") String id);
 
-	List<TransferEntity> findByFromUserIdOrToUserIdOrderByCreatedAtDesc(
-			String fromUserId,
-			String toUserId,
+	@Query("SELECT t FROM TransferEntity t WHERE t.fromUserId = :userId OR t.toUserId = :userId ORDER BY t.createdAt DESC")
+	List<TransferEntity> findByUserId(@Param("userId") String userId,
 			Pageable pageable);
 
-	long countByFromUserIdOrToUserId(String fromUserId, String toUserId);
+	@Query("SELECT COUNT(*) FROM TransferEntity t WHERE t.fromUserId = :userId OR t.toUserId = :userId")
+	long countByUserId(@Param("userId") String userId);
 }
