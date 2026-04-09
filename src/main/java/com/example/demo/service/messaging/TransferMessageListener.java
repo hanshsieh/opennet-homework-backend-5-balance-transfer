@@ -36,9 +36,6 @@ public class TransferMessageListener implements MessageListenerConcurrently {
 				final var transferId = objectMapper.readValue(msg.getBody(), PendingTransferPayload.class)
 						.getTransferId();
 				settlementService.settle(transferId);
-			} catch (IllegalStateException e) {
-				log.warn("Settlement will retry: {}", e.getMessage());
-				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
 			} catch (Exception e) {
 				log.error("Failed to process transfer message", e);
 				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
