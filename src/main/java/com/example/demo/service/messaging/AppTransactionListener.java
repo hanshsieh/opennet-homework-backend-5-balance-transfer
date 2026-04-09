@@ -31,29 +31,26 @@ public class AppTransactionListener implements TransactionListener {
 
 	@Override
 	public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
-		final var listener = resolve(msg);
-		if (listener == null) {
+		final var listenerOpt = resolve(msg);
+		if (listenerOpt.isEmpty()) {
 			log.error("No TopicLocalTransactionListener for topic [{}]", msg.getTopic());
 			return LocalTransactionState.ROLLBACK_MESSAGE;
 		}
-		return listener.executeLocalTransaction(msg, arg);
+		return listenerOpt.get().executeLocalTransaction(msg, arg);
 	}
 
 	@Override
 	public LocalTransactionState checkLocalTransaction(MessageExt msg) {
-		final var listener = resolve(msg);
-		if (listener == null) {
+		final var listenerOpt = resolve(msg);
+		if (listenerOpt.isEmpty()) {
 			log.error("No TopicLocalTransactionListener for check, topic [{}]", msg.getTopic());
 			return LocalTransactionState.UNKNOW;
 		}
-		return listener.checkLocalTransaction(msg);
+		return listenerOpt.get().checkLocalTransaction(msg);
 	}
 
-	private TopicLocalTransactionListener resolve(Message msg) {
-		final var topic = RocketMQTopic.fromTopicName(msg.getTopic());
-		if (topic == null) {
-			return null;
-		}
-		return listenersByTopic.get(topic);
+	private java.util.Optional<TopicLocalTransactionListener> resolve(Message msg) {
+		return RocketMQTopic.fromTopicName(msg.getTopic())
+				.map(listenersByTopic::get);
 	}
 }

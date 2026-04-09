@@ -1,6 +1,7 @@
 package com.example.demo.config;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +14,9 @@ public enum RocketMQTopic {
 
 	private final String topicName;
 
-	public static RocketMQTopic fromTopicName(String topicName) {
+	public static Optional<RocketMQTopic> fromTopicName(String topicName) {
 		return Arrays.stream(values())
 				.filter(t -> t.topicName.equals(topicName))
-				.findFirst()
-				.orElse(null);
+				.findFirst();
 	}
 }
