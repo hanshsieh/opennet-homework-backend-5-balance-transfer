@@ -1,6 +1,10 @@
 spring:
   application:
     name: balance-transfer-service
+  web:
+    # Always use English for API responses.
+    locale: en_US
+    locale-resolver: fixed
   datasource:
     url: jdbc:mysql://localhost:3306/taskdb?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=utf8
     username: taskuser
