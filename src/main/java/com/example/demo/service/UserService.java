@@ -26,6 +26,11 @@ public class UserService {
 	@Transactional
 	@CacheEvict(cacheNames = UserCacheService.BALANCES, key = "#request.userId")
 	public String createUser(CreateUserRequest request) {
+		if (userRepository.existsByUserId(request.getUserId())) {
+			throw new ApiException(ErrorCode.USER_ALREADY_EXISTS,
+					"User already exists: " + request.getUserId());
+		}
+
 		try {
 			userRepository.save(UserEntity.builder()
 					.userId(request.getUserId())
