@@ -114,15 +114,15 @@ Then run Redis commands, for example:
 
 List the user balances cache:
 ```redis
-KEYS users:balances::*
+KEYS user-balance::*
 ```
 
 Get a key
 ```redis
-GET users:balances::alice
+GET user-balance::alice
 ```
 
 Get the TTL of a key
 ```redis
-TTL users:balances::alice
+TTL user-balance::alice
 ```

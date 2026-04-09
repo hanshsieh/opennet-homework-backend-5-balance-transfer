@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
  */
 @Component
 public class UserCacheService {
-	public static final String BALANCES = "users:balances";
+	public static final String BALANCES = "user-balance";
 
 	private static final Logger log = LoggerFactory.getLogger(UserCacheService.class);
 
