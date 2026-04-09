@@ -1,6 +1,7 @@
 package com.example.demo.config;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -30,6 +31,13 @@ public class RocketMQProperties {
 
 		@NotBlank
 		private String group;
+
+		@NotNull
+		private Boolean vipChannelEnabled;
+
+		@NotNull
+		@Min(1)
+		private Integer sendMsgTimeoutMs;
 	}
 
 	@Data
@@ -37,5 +45,8 @@ public class RocketMQProperties {
 
 		@NotBlank
 		private String group;
+
+		@NotNull
+		private Boolean vipChannelEnabled;
 	}
 }

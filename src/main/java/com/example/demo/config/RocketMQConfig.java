@@ -16,6 +16,8 @@ public class RocketMQConfig {
 			AppTransactionListener transactionListener) throws MQClientException {
 		final var producer = new TransactionMQProducer(properties.getProducer().getGroup());
 		producer.setNamesrvAddr(properties.getNameServer());
+		producer.setVipChannelEnabled(properties.getProducer().getVipChannelEnabled());
+		producer.setSendMsgTimeout(properties.getProducer().getSendMsgTimeoutMs());
 		producer.setTransactionListener(transactionListener);
 		producer.start();
 		return producer;

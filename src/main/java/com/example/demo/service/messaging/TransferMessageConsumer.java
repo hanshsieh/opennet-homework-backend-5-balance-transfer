@@ -29,6 +29,7 @@ public class TransferMessageConsumer {
 	public void start() throws MQClientException {
 		consumer = new DefaultMQPushConsumer(properties.getConsumer().getGroup());
 		consumer.setNamesrvAddr(properties.getNameServer());
+		consumer.setVipChannelEnabled(properties.getConsumer().getVipChannelEnabled());
 		consumer.subscribe(RocketMQTopic.PENDING_TRANSFER.getTopicName(), "*");
 		consumer.registerMessageListener(listener);
 		consumer.start();

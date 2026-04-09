@@ -5,6 +5,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
 import com.example.demo.dto.CreateUserRequest;
 import com.example.demo.dto.UserBalanceResponse;
 import com.example.demo.entity.UserEntity;
@@ -17,26 +19,25 @@ public class UserService {
 
 	private final UserRepository userRepository;
 	private final UserBalanceService userBalanceService;
+	private final EntityManager entityManager;
 
-	public UserService(UserRepository userRepository, UserBalanceService userBalanceService) {
+	public UserService(UserRepository userRepository, UserBalanceService userBalanceService, EntityManager entityManager) {
 		this.userRepository = userRepository;
 		this.userBalanceService = userBalanceService;
+		this.entityManager = entityManager;
 	}
 
 	@Transactional
 	@CacheEvict(cacheNames = UserCacheService.BALANCES, key = "#request.userId")
 	public String createUser(CreateUserRequest request) {
-		if (userRepository.existsByUserId(request.getUserId())) {
-			throw new ApiException(ErrorCode.USER_ALREADY_EXISTS,
-					"User already exists: " + request.getUserId());
-		}
-
 		try {
-			userRepository.save(UserEntity.builder()
+			// Use `persist` instead of `save` to insert instead of insert-or-update.
+			entityManager.persist(UserEntity.builder()
 					.userId(request.getUserId())
 					.balance(request.getInitialBalance())
 					.build());
-		} catch (DataIntegrityViolationException ex) {
+			entityManager.flush();
+		} catch (DataIntegrityViolationException | PersistenceException ex) {
 			throw new ApiException(ErrorCode.USER_ALREADY_EXISTS,
 					"User already exists: " + request.getUserId());
 		}

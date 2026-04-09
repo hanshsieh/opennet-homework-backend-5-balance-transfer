@@ -17,7 +17,7 @@ public class UserBalanceService {
 	}
 
 	@Cacheable(cacheNames = UserCacheService.BALANCES, key = "#userId",
-			unless = "#result.isEmpty()")
+			unless = "#result == null")
 	public Optional<Long> getBalance(String userId) {
 		return userRepository.findByUserId(userId).map(user -> user.getBalance());
 	}

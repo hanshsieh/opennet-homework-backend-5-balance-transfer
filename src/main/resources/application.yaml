@@ -20,8 +20,11 @@ rocketmq:
   name-server: 127.0.0.1:9876
   producer:
     group: user-balance-producer-group
+    vip-channel-enabled: false
+    send-msg-timeout-ms: 3000
   consumer:
     group: user-balance-consumer-group
+    vip-channel-enabled: false
 
 server:
   port: 8080
