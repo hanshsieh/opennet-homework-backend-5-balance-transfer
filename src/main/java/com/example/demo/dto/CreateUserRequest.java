@@ -13,6 +13,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/**
+ * Represents the CreateUserRequest class.
+ */
 public class CreateUserRequest {
 	@NotBlank
 	@JsonProperty("userId")

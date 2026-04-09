@@ -13,6 +13,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/**
+ * Represents the TransferRequest class.
+ */
 public class TransferRequest {
 	@NotBlank
 	@JsonProperty("fromUserId")

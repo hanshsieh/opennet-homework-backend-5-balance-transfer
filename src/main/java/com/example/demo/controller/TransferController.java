@@ -24,15 +24,29 @@ import jakarta.validation.constraints.NotBlank;
 @Validated
 @RestController
 @RequestMapping("/transfers")
+/**
+ * Exposes transfer-related HTTP endpoints.
+ */
 public class TransferController {
 
 	private final TransferService transferService;
 
+	/**
+	 * Creates a transfer controller.
+	 *
+	 * @param transferService transfer application service
+	 */
 	public TransferController(TransferService transferService) {
 		this.transferService = transferService;
 	}
 
 	@PostMapping
+	/**
+	 * Creates a transfer request.
+	 *
+	 * @param request transfer request
+	 * @return created transfer id wrapped in response body
+	 */
 	public ResponseEntity<CreateTransferResponse> createTransfer(@Validated @RequestBody TransferRequest request) {
 		final var transferId = transferService.createTransfer(request);
 		final var body = CreateTransferResponse.builder()
@@ -42,6 +56,14 @@ public class TransferController {
 	}
 
 	@GetMapping
+	/**
+	 * Lists transfers for one user with pagination.
+	 *
+	 * @param userId user id
+	 * @param page zero-based page number
+	 * @param size page size
+	 * @return paged transfer response
+	 */
 	public PagedTransferResponse listTransfers(
 			@RequestParam @NotBlank String userId,
 			@RequestParam(defaultValue = "0") @Min(0) int page,
@@ -50,6 +72,12 @@ public class TransferController {
 	}
 
 	@PostMapping("/{transferId}/cancel")
+	/**
+	 * Cancels a pending transfer.
+	 *
+	 * @param transferId transfer id
+	 * @return transfer response after cancellation
+	 */
 	public TransferResponse cancel(@PathVariable @NotBlank String transferId) {
 		return transferService.cancelTransfer(transferId);
 	}

@@ -14,6 +14,9 @@ import com.example.demo.service.messaging.payload.PendingTransferPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
+/**
+ * Represents the MessagePublisher class.
+ */
 public class MessagePublisher {
 
 	private final TransactionMQProducer producer;

@@ -20,15 +20,29 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @RestController
 @RequestMapping("/users")
+/**
+ * Exposes user-related HTTP endpoints.
+ */
 public class UserController {
 
 	private final UserService userService;
 
+	/**
+	 * Creates a user controller.
+	 *
+	 * @param userService user application service
+	 */
 	public UserController(UserService userService) {
 		this.userService = userService;
 	}
 
 	@PostMapping
+	/**
+	 * Creates a user.
+	 *
+	 * @param request create user request
+	 * @return created user id wrapped in response body
+	 */
 	public ResponseEntity<CreateUserResponse> createUser(@Validated @RequestBody CreateUserRequest request) {
 		final var userId = userService.createUser(request);
 		final var body = CreateUserResponse.builder()
@@ -38,6 +52,12 @@ public class UserController {
 	}
 
 	@GetMapping("/{userId}/balance")
+	/**
+	 * Gets current balance for the specified user.
+	 *
+	 * @param userId user id
+	 * @return user balance response
+	 */
 	public UserBalanceResponse getBalance(@PathVariable @NotBlank String userId) {
 		return userService.getBalance(userId);
 	}

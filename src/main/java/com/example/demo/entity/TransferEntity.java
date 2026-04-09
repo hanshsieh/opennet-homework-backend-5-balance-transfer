@@ -24,6 +24,9 @@ import lombok.Setter;
 @Builder
 @Entity
 @Table(name = "transfers")
+/**
+ * Represents the TransferEntity class.
+ */
 public class TransferEntity {
 	@Column(name = "created_at", nullable = false, updatable = false)
 	@CreationTimestamp

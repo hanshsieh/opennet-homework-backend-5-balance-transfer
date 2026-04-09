@@ -11,6 +11,9 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 @Component
+/**
+ * Manages RocketMQ push consumer lifecycle for transfer events.
+ */
 public class TransferMessageConsumer {
 
 	private final RocketMQProperties properties;
@@ -18,6 +21,12 @@ public class TransferMessageConsumer {
 
 	private DefaultMQPushConsumer consumer;
 
+	/**
+	 * Creates a transfer message consumer component.
+	 *
+	 * @param properties RocketMQ properties
+	 * @param listener transfer message listener
+	 */
 	public TransferMessageConsumer(
 			RocketMQProperties properties,
 			TransferMessageListener listener) {
@@ -26,6 +35,9 @@ public class TransferMessageConsumer {
 	}
 
 	@PostConstruct
+	/**
+	 * Starts the RocketMQ consumer.
+	 */
 	public void start() throws MQClientException {
 		consumer = new DefaultMQPushConsumer(properties.getConsumer().getGroup());
 		consumer.setNamesrvAddr(properties.getNameServer());
@@ -36,6 +48,9 @@ public class TransferMessageConsumer {
 	}
 
 	@PreDestroy
+	/**
+	 * Shuts down the RocketMQ consumer if initialized.
+	 */
 	public void shutdown() {
 		if (consumer != null) {
 			consumer.shutdown();

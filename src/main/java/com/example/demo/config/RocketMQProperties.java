@@ -13,6 +13,9 @@ import org.springframework.validation.annotation.Validated;
 @Component
 @Validated
 @Data
+/**
+ * Represents the RocketMQProperties class.
+ */
 public class RocketMQProperties {
 
 	@NotBlank

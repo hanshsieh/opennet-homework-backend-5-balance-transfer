@@ -13,6 +13,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/**
+ * Represents the TransferResponse class.
+ */
 public class TransferResponse {
 	@JsonProperty("id")
 	private String id;

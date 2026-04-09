@@ -2,6 +2,9 @@ package com.example.demo.exception;
 
 import org.springframework.http.HttpStatus;
 
+/**
+ * Defines API error codes and their mapped HTTP status.
+ */
 public enum ErrorCode {
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND),
 	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR),
@@ -17,6 +20,11 @@ public enum ErrorCode {
 		this.status = status;
 	}
 
+	/**
+	 * Returns HTTP status mapped to this error code.
+	 *
+	 * @return HTTP status
+	 */
 	public HttpStatus getStatus() {
 		return status;
 	}

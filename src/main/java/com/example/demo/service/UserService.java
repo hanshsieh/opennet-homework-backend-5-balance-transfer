@@ -14,11 +14,20 @@ import com.example.demo.exception.ApiException;
 import com.example.demo.exception.ErrorCode;
 
 @Service
+/**
+ * Handles user creation and balance query use cases.
+ */
 public class UserService {
 
 	private final UserBalanceService userBalanceService;
 	private final EntityManager entityManager;
 
+	/**
+	 * Creates a user service.
+	 *
+	 * @param userBalanceService balance query service
+	 * @param entityManager JPA entity manager for explicit persistence control
+	 */
 	public UserService(UserBalanceService userBalanceService, EntityManager entityManager) {
 		this.userBalanceService = userBalanceService;
 		this.entityManager = entityManager;
@@ -26,6 +35,12 @@ public class UserService {
 
 	@Transactional
 	@CacheEvict(cacheNames = UserCacheService.BALANCES, key = "#request.userId")
+	/**
+	 * Creates a user with initial balance.
+	 *
+	 * @param request create user request
+	 * @return created user id
+	 */
 	public String createUser(CreateUserRequest request) {
 		try {
 			// Use `persist` instead of `save` to insert instead of insert-or-update.
@@ -41,6 +56,12 @@ public class UserService {
 		return request.getUserId();
 	}
 
+	/**
+	 * Gets current balance for one user.
+	 *
+	 * @param userId user id
+	 * @return user balance response
+	 */
 	public UserBalanceResponse getBalance(String userId) {
 		final var balance = userBalanceService.getBalance(userId)
 				.orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "User not found: " + userId));

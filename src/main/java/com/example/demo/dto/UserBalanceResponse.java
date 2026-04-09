@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/**
+ * Represents the UserBalanceResponse class.
+ */
 public class UserBalanceResponse {
 	@JsonProperty("userId")
 	private String userId;

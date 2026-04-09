@@ -16,20 +16,36 @@ import org.springframework.stereotype.Component;
 import com.example.demo.config.RocketMQTopic;
 
 @Component
+/**
+ * Delegates RocketMQ transaction callbacks by topic.
+ */
 public class AppTransactionListener implements TransactionListener {
 
 	private static final Logger log = LoggerFactory.getLogger(AppTransactionListener.class);
 
 	private final Map<RocketMQTopic, TopicLocalTransactionListener> listenersByTopic;
 
+	/**
+	 * Creates a listener router for all topic-specific local transaction handlers.
+	 *
+	 * @param topicListeners all registered topic listeners
+	 */
 	public AppTransactionListener(List<TopicLocalTransactionListener> topicListeners) {
 		this.listenersByTopic = topicListeners.stream()
 				.collect(Collectors.toMap(TopicLocalTransactionListener::topic, Function.identity(), (a, b) -> {
+					// Duplicate topic handlers make transaction routing ambiguous and unsafe.
 					throw new IllegalArgumentException("Duplicate transaction listener topic: " + a.topic());
 				}));
 	}
 
 	@Override
+	/**
+	 * Executes local transaction logic for the incoming half message.
+	 *
+	 * @param msg RocketMQ message
+	 * @param arg local transaction argument
+	 * @return local transaction state
+	 */
 	public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
 		final var listenerOpt = resolve(msg);
 		if (listenerOpt.isEmpty()) {
@@ -40,6 +56,12 @@ public class AppTransactionListener implements TransactionListener {
 	}
 
 	@Override
+	/**
+	 * Checks local transaction state for broker transaction check requests.
+	 *
+	 * @param msg RocketMQ message
+	 * @return local transaction state
+	 */
 	public LocalTransactionState checkLocalTransaction(MessageExt msg) {
 		final var listenerOpt = resolve(msg);
 		if (listenerOpt.isEmpty()) {
@@ -49,6 +71,12 @@ public class AppTransactionListener implements TransactionListener {
 		return listenerOpt.get().checkLocalTransaction(msg);
 	}
 
+	/**
+	 * Resolves a topic-specific listener from message topic metadata.
+	 *
+	 * @param msg RocketMQ message
+	 * @return matched topic listener if present
+	 */
 	private java.util.Optional<TopicLocalTransactionListener> resolve(Message msg) {
 		return RocketMQTopic.fromTopicName(msg.getTopic())
 				.map(listenersByTopic::get);

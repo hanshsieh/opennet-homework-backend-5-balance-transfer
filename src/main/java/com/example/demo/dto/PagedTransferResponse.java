@@ -13,6 +13,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/**
+ * Represents the PagedTransferResponse class.
+ */
 public class PagedTransferResponse {
 	@JsonProperty("items")
 	private List<TransferResponse> items;

@@ -21,6 +21,9 @@ import lombok.AllArgsConstructor;
 @Builder
 @Entity
 @Table(name = "users")
+/**
+ * Represents the UserEntity class.
+ */
 public class UserEntity {
 	@Column(name = "created_at", nullable = false, updatable = false)
 	@CreationTimestamp

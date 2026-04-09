@@ -15,6 +15,9 @@ import com.example.demo.repository.TransferRepository;
 import com.example.demo.repository.UserRepository;
 
 @Service
+/**
+ * Settles pending transfers by applying account balance updates.
+ */
 public class TransferSettlementService {
 
 	private static final Logger log = LoggerFactory.getLogger(TransferSettlementService.class);
@@ -23,6 +26,13 @@ public class TransferSettlementService {
 	private final UserRepository userRepository;
 	private final UserCacheService cacheEvictor;
 
+	/**
+	 * Creates a settlement service instance.
+	 *
+	 * @param transferRepository repository for transfer row locking and updates
+	 * @param userRepository repository for user row locking and balance updates
+	 * @param cacheEvictor cache service for balance eviction
+	 */
 	public TransferSettlementService(
 			TransferRepository transferRepository,
 			UserRepository userRepository,
@@ -33,6 +43,11 @@ public class TransferSettlementService {
 	}
 
 	@Transactional
+	/**
+	 * Settles one transfer in a transaction.
+	 *
+	 * @param transferId transfer id
+	 */
 	public void settle(String transferId) {
 		final var transfer = transferRepository.findByIdForUpdate(transferId).orElse(null);
 		if (transfer == null || transfer.getStatus() != TransferStatus.PENDING) {
@@ -59,6 +74,7 @@ public class TransferSettlementService {
 			transfer.setStatus(TransferStatus.FAILED);
 			return;
 		}
+		// Mark the transfer as failed if the from user has insufficient balance.
 		if (fromUser.getBalance() < transfer.getAmount()) {
 			transfer.setStatus(TransferStatus.FAILED);
 			return;
@@ -68,16 +84,25 @@ public class TransferSettlementService {
 		fromUser.setBalance(fromBalanceAfterTransfer);
 		toUser.setBalance(toBalanceAfterTransfer);
 		transfer.setStatus(TransferStatus.SETTLED);
+		// Evict cache only after commit to avoid exposing uncommitted values.
 		registerAfterCommit(() -> {
 			cacheEvictor.evictBalance(transfer.getFromUserId());
 			cacheEvictor.evictBalance(transfer.getToUserId());
 		});
 	}
 
+	/**
+	 * Registers an action that runs after successful commit.
+	 *
+	 * @param action callback to execute
+	 */
 	private static void registerAfterCommit(Runnable action) {
 		if (TransactionSynchronizationManager.isSynchronizationActive()) {
 			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
 				@Override
+				/**
+				 * Executes the deferred callback after transaction commit.
+				 */
 				public void afterCommit() {
 					action.run();
 				}

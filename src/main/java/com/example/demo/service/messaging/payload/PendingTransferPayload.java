@@ -14,6 +14,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/**
+ * Represents the PendingTransferPayload class.
+ */
 public class PendingTransferPayload {
 	@JsonProperty("transferId")
 	private String transferId;

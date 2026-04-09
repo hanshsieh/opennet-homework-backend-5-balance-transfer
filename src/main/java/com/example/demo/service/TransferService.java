@@ -21,12 +21,22 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.service.messaging.MessagePublisher;
 
 @Service
+/**
+ * Handles transfer creation, query, and cancellation.
+ */
 public class TransferService {
 	public static final Duration CANCEL_WINDOW = Duration.ofMinutes(10);
 	private final UserRepository userRepository;
 	private final TransferRepository transferRepository;
 	private final MessagePublisher eventPublisher;
 
+	/**
+	 * Creates a transfer service instance.
+	 *
+	 * @param userRepository repository for user existence checks
+	 * @param transferRepository repository for transfer persistence/query
+	 * @param eventPublisher publisher that sends transactional transfer messages
+	 */
 	public TransferService(UserRepository userRepository, TransferRepository transferRepository,
 			MessagePublisher eventPublisher) {
 		this.userRepository = userRepository;
@@ -34,12 +44,19 @@ public class TransferService {
 		this.eventPublisher = eventPublisher;
 	}
 
+	/**
+	 * Creates a transfer request and returns its transfer id.
+	 *
+	 * @param request transfer input
+	 * @return generated transfer id
+	 */
 	public String createTransfer(TransferRequest request) {
 		validateTransferRequest(request);
 		final var id = UUID.randomUUID().toString();
 		try {
 			final var sendResult = eventPublisher.sendPendingTransfer(id, request);
 			final var state = sendResult.getLocalTransactionState();
+			// The API returns success only when the half-message local transaction commits.
 			if (state != LocalTransactionState.COMMIT_MESSAGE) {
 				throw new ApiException(ErrorCode.INTERNAL_ERROR,
 						"Transfer could not be confirmed; check transfer id: " + id);
@@ -53,6 +70,14 @@ public class TransferService {
 		return id;
 	}
 
+	/**
+	 * Lists transfers for a user by page, newest first.
+	 *
+	 * @param userId user id
+	 * @param pageNumber zero-based page number
+	 * @param pageSize page size
+	 * @return paged transfer response
+	 */
 	public PagedTransferResponse listTransfers(String userId, int pageNumber, int pageSize) {
 		if (!userRepository.existsByUserId(userId)) {
 			throw new ApiException(ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
@@ -70,10 +95,17 @@ public class TransferService {
 	}
 
 	@Transactional
+	/**
+	 * Cancels a pending transfer within the allowed cancellation window.
+	 *
+	 * @param transferId transfer id
+	 * @return transfer after cancellation (or existing cancelled transfer)
+	 */
 	public TransferResponse cancelTransfer(String transferId) {
 		TransferEntity transfer = transferRepository.findByIdForUpdate(transferId)
 				.orElseThrow(() -> new ApiException(ErrorCode.TRANSFER_NOT_FOUND,
 						"Transfer not found: " + transferId));
+		// Idempotency: cancelling an already cancelled transfer returns current state.
 		if (transfer.getStatus() == TransferStatus.CANCELLED) {
 			return toResponse(transfer);
 		}
@@ -89,6 +121,11 @@ public class TransferService {
 		return toResponse(transfer);
 	}
 
+	/**
+	 * Validates business constraints for transfer creation.
+	 *
+	 * @param request transfer input
+	 */
 	private static void validateTransferRequest(TransferRequest request) {
 		if (request.getFromUserId().equals(request.getToUserId())) {
 			throw new ApiException(ErrorCode.VALIDATION_ERROR,
@@ -96,6 +133,12 @@ public class TransferService {
 		}
 	}
 
+	/**
+	 * Converts a transfer entity to API response format.
+	 *
+	 * @param e transfer entity
+	 * @return transfer response
+	 */
 	private TransferResponse toResponse(TransferEntity e) {
 		return TransferResponse.builder()
 				.id(e.getId())

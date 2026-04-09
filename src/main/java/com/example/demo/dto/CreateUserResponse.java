@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/**
+ * Represents the CreateUserResponse class.
+ */
 public class CreateUserResponse {
 	@JsonProperty("id")
 	private String id;

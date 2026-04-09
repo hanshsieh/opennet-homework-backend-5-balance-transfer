@@ -13,11 +13,20 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
+/**
+ * Translates exceptions into API error responses.
+ */
 public class GlobalExceptionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class.getName());
 
 	@ExceptionHandler(ApiException.class)
+	/**
+	 * Handles domain-level API exceptions.
+	 *
+	 * @param ex api exception
+	 * @return error response entity
+	 */
 	public ResponseEntity<ErrorResponse> handleApi(ApiException ex) {
 		if (ex.getCode().getStatus() == HttpStatus.INTERNAL_SERVER_ERROR) {
 			log.error("Internal server error: ", ex);
@@ -28,7 +37,14 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
+	/**
+	 * Handles bean validation errors from request bodies.
+	 *
+	 * @param ex validation exception
+	 * @return error response entity
+	 */
 	public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+		// Aggregate all field errors into one deterministic message payload.
 		final var msg = ex.getBindingResult().getFieldErrors().stream()
 				.map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
 				.collect(Collectors.joining("; "));
@@ -38,6 +54,12 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler(ConstraintViolationException.class)
+	/**
+	 * Handles constraint violations from method parameters and path/query values.
+	 *
+	 * @param ex constraint violation exception
+	 * @return error response entity
+	 */
 	public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
 		final var msg = ex.getConstraintViolations().stream()
 				.map(v -> v.getPropertyPath() + ": " + v.getMessage())

@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Configuration;
 import com.example.demo.service.messaging.AppTransactionListener;
 
 @Configuration
+/**
+ * Represents the RocketMQConfig class.
+ */
 public class RocketMQConfig {
 
 	@Bean(destroyMethod = "shutdown")

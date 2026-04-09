@@ -17,6 +17,9 @@ import com.example.demo.service.messaging.payload.PendingTransferPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
+/**
+ * Local transaction handler for pending transfer messages.
+ */
 public class TransferTransactionListener implements TopicLocalTransactionListener {
 
 	private static final Logger log = LoggerFactory.getLogger(TransferTransactionListener.class);
@@ -24,6 +27,12 @@ public class TransferTransactionListener implements TopicLocalTransactionListene
 	private final TransferRepository transferRepository;
 	private final ObjectMapper objectMapper;
 
+	/**
+	 * Creates a transfer topic transaction listener.
+	 *
+	 * @param transferRepository repository used to create/check transfer records
+	 * @param objectMapper mapper used to parse payload in transaction checks
+	 */
 	public TransferTransactionListener(
 			TransferRepository transferRepository,
 			ObjectMapper objectMapper) {
@@ -32,15 +41,28 @@ public class TransferTransactionListener implements TopicLocalTransactionListene
 	}
 
 	@Override
+	/**
+	 * Returns the topic this listener handles.
+	 *
+	 * @return transfer pending topic
+	 */
 	public RocketMQTopic topic() {
 		return RocketMQTopic.PENDING_TRANSFER;
 	}
 
 	@Override
 	@Transactional
+	/**
+	 * Persists a pending transfer as the local transaction step.
+	 *
+	 * @param msg RocketMQ message
+	 * @param arg local argument with transfer details
+	 * @return local transaction state
+	 */
 	public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
 		final var args = (PendingTransferLocalArgs) arg;
 		try {
+			// Insert transfer in PENDING state first; balance changes happen asynchronously later.
 			transferRepository.save(TransferEntity.builder()
 					.id(args.getTransferId())
 					.fromUserId(args.getFromUserId())
@@ -56,6 +78,12 @@ public class TransferTransactionListener implements TopicLocalTransactionListene
 	}
 
 	@Override
+	/**
+	 * Checks whether the local transaction has committed by transfer persistence.
+	 *
+	 * @param msg RocketMQ message
+	 * @return local transaction state
+	 */
 	public LocalTransactionState checkLocalTransaction(MessageExt msg) {
 		try {
 			final var transferId = objectMapper.readValue(msg.getBody(), PendingTransferPayload.class).getTransferId();
