@@ -42,7 +42,7 @@ docker compose down -v
 
 # Test APIs with curl
 
-Assume base URL is `http://localhost:8080` and `Content-Type` is JSON.
+Assume base URL is `http://localhost:8080`.
 
 ### Create users
 
@@ -126,3 +126,31 @@ Get the TTL of a key
 ```redis
 TTL user-balance::alice
 ```
+
+# Transfer status transition
+
+After `POST /transfers`, a transfer record is created first, then settled asynchronously.
+
+- `PENDING`
+  - Initial state right after transfer creation.
+  - Means settlement has not finished yet.
+- `SETTLED`
+  - Settlement succeeds.
+  - `fromUserId` balance is deducted, `toUserId` balance is credited.
+- `FAILED`
+  - Settlement is attempted but cannot complete, such as:
+    - source user or target user does not exist
+    - insufficient balance on source user
+    - invalid transfer data (for example, same source and target user)
+  - No balance change is applied.
+- `CANCELLED`
+  - User cancels a transfer while it is still `PENDING` and within the cancellation window.
+  - Current cancellation window: within 10 minutes after creation.
+  - Cancelling a already cancelled transfer has no effect.
+
+Flow summary:
+
+- `PENDING` -> `SETTLED` (async settlement succeeds)
+- `PENDING` -> `FAILED` (async settlement fails)
+- `PENDING` -> `CANCELLED` (manual cancel within 10 minutes)
+- `SETTLED`, `FAILED`, and `CANCELLED` are terminal states.
