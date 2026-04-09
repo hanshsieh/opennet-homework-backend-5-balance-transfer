@@ -63,6 +63,37 @@ class TransferServiceTest {
 	}
 
 	@Test
+	void createTransfer_shouldThrowInternalErrorWhenMessageNotCommitted() throws Exception {
+		final var request = TransferRequest.builder()
+				.fromUserId("u1")
+				.toUserId("u2")
+				.amount(50L)
+				.build();
+		final var sendResult = new TransactionSendResult();
+		sendResult.setLocalTransactionState(LocalTransactionState.ROLLBACK_MESSAGE);
+		when(eventPublisher.sendPendingTransfer(any(String.class), eq(request))).thenReturn(sendResult);
+
+		assertThatThrownBy(() -> transferService.createTransfer(request))
+				.isInstanceOf(ApiException.class)
+				.satisfies(ex -> assertThat(((ApiException) ex).getCode()).isEqualTo(ErrorCode.INTERNAL_ERROR));
+	}
+
+	@Test
+	void createTransfer_shouldWrapUnexpectedException() throws Exception {
+		final var request = TransferRequest.builder()
+				.fromUserId("u1")
+				.toUserId("u2")
+				.amount(50L)
+				.build();
+		when(eventPublisher.sendPendingTransfer(any(String.class), eq(request)))
+				.thenThrow(new RuntimeException("boom"));
+
+		assertThatThrownBy(() -> transferService.createTransfer(request))
+				.isInstanceOf(ApiException.class)
+				.satisfies(ex -> assertThat(((ApiException) ex).getCode()).isEqualTo(ErrorCode.INTERNAL_ERROR));
+	}
+
+	@Test
 	void createTransfer_shouldThrowValidationErrorWhenFromEqualsTo() {
 		final var request = TransferRequest.builder()
 				.fromUserId("u1")
@@ -157,6 +188,21 @@ class TransferServiceTest {
 		assertThatThrownBy(() -> transferService.cancelTransfer("t1"))
 				.isInstanceOf(ApiException.class)
 				.satisfies(ex -> assertThat(((ApiException) ex).getCode()).isEqualTo(ErrorCode.TRANSFER_STATE_CONFLICT));
+	}
+
+	@Test
+	void cancelTransfer_shouldThrowWhenCancelWindowExpired() {
+		final var cancelWindow = TransferService.CANCEL_WINDOW;
+		final var transfer = TransferEntity.builder()
+				.id("t1")
+				.status(TransferStatus.PENDING)
+				.createdAt(Instant.now().minusSeconds(cancelWindow.plusSeconds(1).toSeconds()))
+				.build();
+		when(transferRepository.findByIdForUpdate("t1")).thenReturn(Optional.of(transfer));
+
+		assertThatThrownBy(() -> transferService.cancelTransfer("t1"))
+				.isInstanceOf(ApiException.class)
+				.satisfies(ex -> assertThat(((ApiException) ex).getCode()).isEqualTo(ErrorCode.CANCEL_WINDOW_EXPIRED));
 	}
 
 	@Test

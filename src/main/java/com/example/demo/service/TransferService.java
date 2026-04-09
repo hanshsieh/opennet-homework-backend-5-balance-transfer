@@ -22,7 +22,7 @@ import com.example.demo.service.messaging.MessagePublisher;
 
 @Service
 public class TransferService {
-	private static final Duration CANCEL_WINDOW = Duration.ofMinutes(10);
+	public static final Duration CANCEL_WINDOW = Duration.ofMinutes(10);
 	private final UserRepository userRepository;
 	private final TransferRepository transferRepository;
 	private final MessagePublisher eventPublisher;
