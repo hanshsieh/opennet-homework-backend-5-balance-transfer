@@ -2,6 +2,7 @@ package com.example.demo.service.messaging;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -13,8 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.example.demo.config.RocketMQTopic;
-
 @Component
 /**
  * Delegates RocketMQ transaction callbacks by topic.
@@ -23,7 +22,7 @@ public class AppTransactionListener implements TransactionListener {
 
 	private static final Logger log = LoggerFactory.getLogger(AppTransactionListener.class);
 
-	private final Map<RocketMQTopic, TopicLocalTransactionListener> listenersByTopic;
+	private final Map<MessageTopic, TopicLocalTransactionListener> listenersByTopic;
 
 	/**
 	 * Creates a listener router for all topic-specific local transaction handlers.
@@ -77,8 +76,8 @@ public class AppTransactionListener implements TransactionListener {
 	 * @param msg RocketMQ message
 	 * @return matched topic listener if present
 	 */
-	private java.util.Optional<TopicLocalTransactionListener> resolve(Message msg) {
-		return RocketMQTopic.fromTopicName(msg.getTopic())
+	private Optional<TopicLocalTransactionListener> resolve(Message msg) {
+		return MessageTopic.fromTopicName(msg.getTopic())
 				.map(listenersByTopic::get);
 	}
 }

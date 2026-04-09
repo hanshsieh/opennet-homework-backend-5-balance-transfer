@@ -25,6 +25,10 @@ import lombok.AllArgsConstructor;
  * Represents the UserEntity class.
  */
 public class UserEntity {
+	@Id
+	@Column(name = "user_id", nullable = false, length = 64)
+	private String userId;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	@CreationTimestamp
 	private Instant createdAt;
@@ -32,10 +36,6 @@ public class UserEntity {
 	@Column(name = "updated_at", nullable = false)
 	@UpdateTimestamp
 	private Instant updatedAt;
-
-	@Id
-	@Column(name = "user_id", nullable = false, length = 64)
-	private String userId;
 
 	@Column(name = "balance", nullable = false)
 	private long balance;

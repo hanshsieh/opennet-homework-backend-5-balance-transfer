@@ -102,7 +102,7 @@ public class TransferService {
 	 * @return transfer after cancellation (or existing cancelled transfer)
 	 */
 	public TransferResponse cancelTransfer(String transferId) {
-		TransferEntity transfer = transferRepository.findByIdForUpdate(transferId)
+		final var transfer = transferRepository.findByIdForUpdate(transferId)
 				.orElseThrow(() -> new ApiException(ErrorCode.TRANSFER_NOT_FOUND,
 						"Transfer not found: " + transferId));
 		// Idempotency: cancelling an already cancelled transfer returns current state.

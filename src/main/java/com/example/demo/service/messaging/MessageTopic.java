@@ -1,4 +1,4 @@
-package com.example.demo.config;
+package com.example.demo.service.messaging;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Declares RocketMQ topics used by this application.
  */
-public enum RocketMQTopic {
+public enum MessageTopic {
 
 	PENDING_TRANSFER("pending-transfer");
 
@@ -23,7 +23,7 @@ public enum RocketMQTopic {
 	 * @param topicName topic name from RocketMQ metadata
 	 * @return matched topic enum if present
 	 */
-	public static Optional<RocketMQTopic> fromTopicName(String topicName) {
+	public static Optional<MessageTopic> fromTopicName(String topicName) {
 		return Arrays.stream(values())
 				.filter(t -> t.topicName.equals(topicName))
 				.findFirst();

@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.demo.config.RocketMQTopic;
+import jakarta.persistence.EntityManager;
 import com.example.demo.entity.TransferEntity;
 import com.example.demo.entity.TransferStatus;
 import com.example.demo.repository.TransferRepository;
@@ -25,6 +25,7 @@ public class TransferTransactionListener implements TopicLocalTransactionListene
 	private static final Logger log = LoggerFactory.getLogger(TransferTransactionListener.class);
 
 	private final TransferRepository transferRepository;
+	private final EntityManager entityManager;
 	private final ObjectMapper objectMapper;
 
 	/**
@@ -35,8 +36,10 @@ public class TransferTransactionListener implements TopicLocalTransactionListene
 	 */
 	public TransferTransactionListener(
 			TransferRepository transferRepository,
+			EntityManager entityManager,
 			ObjectMapper objectMapper) {
 		this.transferRepository = transferRepository;
+		this.entityManager = entityManager;
 		this.objectMapper = objectMapper;
 	}
 
@@ -46,8 +49,8 @@ public class TransferTransactionListener implements TopicLocalTransactionListene
 	 *
 	 * @return transfer pending topic
 	 */
-	public RocketMQTopic topic() {
-		return RocketMQTopic.PENDING_TRANSFER;
+	public MessageTopic topic() {
+		return MessageTopic.PENDING_TRANSFER;
 	}
 
 	@Override
@@ -63,7 +66,8 @@ public class TransferTransactionListener implements TopicLocalTransactionListene
 		final var args = (PendingTransferLocalArgs) arg;
 		try {
 			// Insert transfer in PENDING state first; balance changes happen asynchronously later.
-			transferRepository.save(TransferEntity.builder()
+			// Use `persist` instead of `save` to insert instead of insert-or-update.
+			entityManager.persist(TransferEntity.builder()
 					.id(args.getTransferId())
 					.fromUserId(args.getFromUserId())
 					.toUserId(args.getToUserId())
@@ -86,7 +90,8 @@ public class TransferTransactionListener implements TopicLocalTransactionListene
 	 */
 	public LocalTransactionState checkLocalTransaction(MessageExt msg) {
 		try {
-			final var transferId = objectMapper.readValue(msg.getBody(), PendingTransferPayload.class).getTransferId();
+			final var transferId = objectMapper.readValue(msg.getBody(), PendingTransferPayload.class)
+				.getTransferId();
 			return transferRepository.findById(transferId).isPresent()
 					? LocalTransactionState.COMMIT_MESSAGE
 					: LocalTransactionState.ROLLBACK_MESSAGE;

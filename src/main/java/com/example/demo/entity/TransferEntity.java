@@ -28,6 +28,10 @@ import lombok.Setter;
  * Represents the TransferEntity class.
  */
 public class TransferEntity {
+	@Id
+	@Column(name = "id", nullable = false, length = 36)
+	private String id;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	@CreationTimestamp
 	private Instant createdAt;
@@ -35,10 +39,6 @@ public class TransferEntity {
 	@Column(name = "updated_at", nullable = false)
 	@UpdateTimestamp
 	private Instant updatedAt;
-
-	@Id
-	@Column(name = "id", nullable = false, length = 36)
-	private String id;
 
 	@Column(name = "from_user_id", nullable = false, length = 64)
 	private String fromUserId;

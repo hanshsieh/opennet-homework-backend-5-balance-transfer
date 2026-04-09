@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.demo.config.RocketMQProperties;
-import com.example.demo.config.RocketMQTopic;
 
 @ExtendWith(MockitoExtension.class)
 class TransferMessageConsumerTest {
@@ -44,7 +43,7 @@ class TransferMessageConsumerTest {
 			final var created = construction.constructed().getFirst();
 			verify(created).setNamesrvAddr("127.0.0.1:9876");
 			verify(created).setVipChannelEnabled(false);
-			verify(created).subscribe(RocketMQTopic.PENDING_TRANSFER.getTopicName(), "*");
+			verify(created).subscribe(MessageTopic.PENDING_TRANSFER.getTopicName(), "*");
 			verify(created).registerMessageListener(listener);
 			verify(created).start();
 		}

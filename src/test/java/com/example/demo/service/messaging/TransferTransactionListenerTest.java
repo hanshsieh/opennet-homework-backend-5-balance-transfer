@@ -2,6 +2,7 @@ package com.example.demo.service.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -18,7 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.demo.config.RocketMQTopic;
+import jakarta.persistence.EntityManager;
 import com.example.demo.entity.TransferEntity;
 import com.example.demo.entity.TransferStatus;
 import com.example.demo.repository.TransferRepository;
@@ -33,6 +34,9 @@ class TransferTransactionListenerTest {
 	private TransferRepository transferRepository;
 
 	@Mock
+	private EntityManager entityManager;
+
+	@Mock
 	private ObjectMapper objectMapper;
 
 	@InjectMocks
@@ -40,7 +44,7 @@ class TransferTransactionListenerTest {
 
 	@Test
 	void topic_shouldReturnPendingTransferTopic() {
-		assertThat(listener.topic()).isEqualTo(RocketMQTopic.PENDING_TRANSFER);
+		assertThat(listener.topic()).isEqualTo(MessageTopic.PENDING_TRANSFER);
 	}
 
 	@Test
@@ -53,11 +57,11 @@ class TransferTransactionListenerTest {
 				.build();
 
 		final var result = listener.executeLocalTransaction(
-				new Message(RocketMQTopic.PENDING_TRANSFER.getTopicName(), new byte[0]), args);
+				new Message(MessageTopic.PENDING_TRANSFER.getTopicName(), new byte[0]), args);
 
 		assertThat(result).isEqualTo(LocalTransactionState.COMMIT_MESSAGE);
 		final var captor = ArgumentCaptor.forClass(TransferEntity.class);
-		verify(transferRepository).save(captor.capture());
+		verify(entityManager).persist(captor.capture());
 		final var saved = captor.getValue();
 		assertThat(saved.getId()).isEqualTo("t1");
 		assertThat(saved.getFromUserId()).isEqualTo("u1");
@@ -68,7 +72,7 @@ class TransferTransactionListenerTest {
 
 	@Test
 	void executeLocalTransaction_shouldRollbackWhenSaveFails() {
-		when(transferRepository.save(any())).thenThrow(new RuntimeException("db down"));
+		doThrow(new RuntimeException("db down")).when(entityManager).persist(any());
 		final var args = PendingTransferLocalArgs.builder()
 				.transferId("t1")
 				.fromUserId("u1")
@@ -77,7 +81,7 @@ class TransferTransactionListenerTest {
 				.build();
 
 		final var result = listener.executeLocalTransaction(
-				new Message(RocketMQTopic.PENDING_TRANSFER.getTopicName(), new byte[0]), args);
+				new Message(MessageTopic.PENDING_TRANSFER.getTopicName(), new byte[0]), args);
 
 		assertThat(result).isEqualTo(LocalTransactionState.ROLLBACK_MESSAGE);
 	}

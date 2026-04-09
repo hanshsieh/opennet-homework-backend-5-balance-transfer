@@ -9,9 +9,6 @@ import org.slf4j.LoggerFactory;
 @Component
 /**
  * Cache helper component for user-balance cache eviction.
- *
- * <p>Separate component so {@link CacheEvict} runs through the Spring proxy
- * (avoids self-invocation bypassing cache interceptor).</p>
  */
 public class UserCacheService {
 	public static final String BALANCES = "user-balance";

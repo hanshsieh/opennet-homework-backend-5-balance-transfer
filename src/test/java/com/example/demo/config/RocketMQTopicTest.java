@@ -4,21 +4,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
+import com.example.demo.service.messaging.MessageTopic;
+
 class RocketMQTopicTest {
 
 	@Test
 	void getTopicName_shouldReturnConfiguredTopicName() {
-		assertThat(RocketMQTopic.PENDING_TRANSFER.getTopicName()).isEqualTo("pending-transfer");
+		assertThat(MessageTopic.PENDING_TRANSFER.getTopicName()).isEqualTo("pending-transfer");
 	}
 
 	@Test
 	void fromTopicName_shouldReturnMatchingEnumValue() {
-		assertThat(RocketMQTopic.fromTopicName("pending-transfer"))
-				.contains(RocketMQTopic.PENDING_TRANSFER);
+		assertThat(MessageTopic.fromTopicName("pending-transfer"))
+				.contains(MessageTopic.PENDING_TRANSFER);
 	}
 
 	@Test
 	void fromTopicName_shouldReturnEmptyWhenNoMatch() {
-		assertThat(RocketMQTopic.fromTopicName("unknown")).isEmpty();
+		assertThat(MessageTopic.fromTopicName("unknown")).isEmpty();
 	}
 }

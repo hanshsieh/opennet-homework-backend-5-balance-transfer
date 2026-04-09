@@ -5,7 +5,6 @@ import org.apache.rocketmq.client.exception.MQClientException;
 import org.springframework.stereotype.Component;
 
 import com.example.demo.config.RocketMQProperties;
-import com.example.demo.config.RocketMQTopic;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -42,7 +41,7 @@ public class TransferMessageConsumer {
 		consumer = new DefaultMQPushConsumer(properties.getConsumer().getGroup());
 		consumer.setNamesrvAddr(properties.getNameServer());
 		consumer.setVipChannelEnabled(properties.getConsumer().getVipChannelEnabled());
-		consumer.subscribe(RocketMQTopic.PENDING_TRANSFER.getTopicName(), "*");
+		consumer.subscribe(MessageTopic.PENDING_TRANSFER.getTopicName(), "*");
 		consumer.registerMessageListener(listener);
 		consumer.start();
 	}

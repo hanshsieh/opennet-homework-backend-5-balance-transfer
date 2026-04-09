@@ -16,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.demo.config.RocketMQTopic;
 import com.example.demo.dto.TransferRequest;
 import com.example.demo.service.messaging.localargs.PendingTransferLocalArgs;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,7 +51,7 @@ class MessagePublisherTest {
 		final var argsCaptor = ArgumentCaptor.forClass(PendingTransferLocalArgs.class);
 		verify(producer).sendMessageInTransaction(msgCaptor.capture(), argsCaptor.capture());
 		final var msg = msgCaptor.getValue();
-		assertThat(msg.getTopic()).isEqualTo(RocketMQTopic.PENDING_TRANSFER.getTopicName());
+		assertThat(msg.getTopic()).isEqualTo(MessageTopic.PENDING_TRANSFER.getTopicName());
 		assertThat(new String(msg.getBody(), StandardCharsets.UTF_8)).isEqualTo("{\"transferId\":\"t1\"}");
 
 		final var localArgs = argsCaptor.getValue();

@@ -7,7 +7,6 @@ import org.apache.rocketmq.client.producer.TransactionSendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.config.RocketMQTopic;
 import com.example.demo.dto.TransferRequest;
 import com.example.demo.service.messaging.localargs.PendingTransferLocalArgs;
 import com.example.demo.service.messaging.payload.PendingTransferPayload;
@@ -35,7 +34,7 @@ public class MessagePublisher {
 				.transferId(transferId)
 				.build())
 				.getBytes(StandardCharsets.UTF_8);
-		final var msg = new Message(RocketMQTopic.PENDING_TRANSFER.getTopicName(), body);
+		final var msg = new Message(MessageTopic.PENDING_TRANSFER.getTopicName(), body);
 		final var localArgs = PendingTransferLocalArgs.builder()
 				.transferId(transferId)
 				.fromUserId(request.getFromUserId())
