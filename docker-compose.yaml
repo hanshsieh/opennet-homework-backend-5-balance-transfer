@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: mysql:8.0
+    image: mysql:lts
     container_name: mysql
     restart: always
     environment:
@@ -20,7 +20,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:7
+    image: redis:8.2.5
     container_name: redis
     restart: always
     ports:
@@ -29,7 +29,8 @@ services:
       - redis_data:/data
 
   rocketmq-namesrv:
-    image: apache/rocketmq:5.1.4
+    # Notice that 5.4.0 needs librocksdbjni-* JNI, which is not available for arm64.
+    image: apache/rocketmq:5.3.2
     container_name: rocketmq-namesrv
     ports:
       - "9876:9876"
@@ -43,7 +44,7 @@ services:
       retries: 5
 
   rocketmq-broker:
-    image: apache/rocketmq:5.1.4
+    image: apache/rocketmq:5.3.2
     container_name: rocketmq-broker
     depends_on:
       - rocketmq-namesrv
@@ -54,8 +55,8 @@ services:
       NAMESRV_ADDR: rocketmq-namesrv:9876
       JAVA_OPT_EXT: "-Xms512m -Xmx512m -Xmn256m"
     volumes:
-      - ./broker.conf:/home/rocketmq/rocketmq-5.1.4/conf/broker.conf
-    command: sh mqbroker -c /home/rocketmq/rocketmq-5.1.4/conf/broker.conf
+      - ./broker.conf:/home/rocketmq/rocketmq-5.3.2/conf/broker.conf
+    command: sh mqbroker -c /home/rocketmq/rocketmq-5.3.2/conf/broker.conf
 
   rocketmq-console:
     image: apacherocketmq/rocketmq-dashboard:latest
