@@ -1,5 +1,10 @@
 package com.example.demo.service.messaging;
 
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.apache.rocketmq.client.producer.TransactionListener;
 import org.apache.rocketmq.common.message.Message;
@@ -8,44 +13,45 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.example.demo.repository.TransferRepository;
-import com.example.demo.service.TransferService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 @Component
 public class AppTransactionListener implements TransactionListener {
 
 	private static final Logger log = LoggerFactory.getLogger(AppTransactionListener.class);
 
-	private final TransferRepository transferRepository;
-	private final TransferService transferService;
-	private final ObjectMapper objectMapper;
+	private final Map<String, TaggedLocalTransactionListener> listenersByTag;
 
-	public AppTransactionListener(
-			TransferService transferService,
-			TransferRepository transferRepository,
-			ObjectMapper objectMapper) {
-		this.transferService = transferService;
-		this.transferRepository = transferRepository;
-		this.objectMapper = objectMapper;
+	public AppTransactionListener(List<TaggedLocalTransactionListener> taggedListeners) {
+		this.listenersByTag = taggedListeners.stream()
+				.collect(Collectors.toMap(TaggedLocalTransactionListener::tag, Function.identity(), (a, b) -> {
+					throw new IllegalStateException("Duplicate transaction listener tag: " + a.tag());
+				}));
 	}
 
 	@Override
 	public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
-		PendingTransferLocalArgs args = (PendingTransferLocalArgs) arg;
-		return transferService.createTransferLocally(args);
+		final var listener = resolve(msg);
+		if (listener == null) {
+			log.error("No TaggedLocalTransactionListener for tag [{}]", msg.getTags());
+			return LocalTransactionState.ROLLBACK_MESSAGE;
+		}
+		return listener.executeLocalTransaction(msg, arg);
 	}
 
 	@Override
 	public LocalTransactionState checkLocalTransaction(MessageExt msg) {
-		try {
-			final var transferId = objectMapper.readValue(msg.getBody(), PendingTransferPayload.class).getTransferId();
-			return transferRepository.findById(transferId).isPresent()
-					? LocalTransactionState.COMMIT_MESSAGE
-					: LocalTransactionState.ROLLBACK_MESSAGE;
-		} catch (Exception e) {
-			log.warn("checkLocalTransaction failed: {}", e.getMessage());
+		final var listener = resolve(msg);
+		if (listener == null) {
+			log.error("No TaggedLocalTransactionListener for check, tag [{}]", msg.getTags());
 			return LocalTransactionState.UNKNOW;
 		}
+		return listener.checkLocalTransaction(msg);
+	}
+
+	private TaggedLocalTransactionListener resolve(Message msg) {
+		final var tag = msg.getTags();
+		if (tag == null || tag.isBlank()) {
+			return null;
+		}
+		return listenersByTag.get(tag);
 	}
 }

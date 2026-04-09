@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.rocketmq.client.producer.LocalTransactionState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +20,10 @@ import com.example.demo.exception.ErrorCode;
 import com.example.demo.repository.TransferRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.messaging.EventPublisher;
-import com.example.demo.service.messaging.PendingTransferLocalArgs;
 
 @Service
 public class TransferService {
 	private static final Duration CANCEL_WINDOW = Duration.ofMinutes(10);
-	private static final Logger log = LoggerFactory.getLogger(TransferService.class);
 	private final UserRepository userRepository;
 	private final TransferRepository transferRepository;
 	private final EventPublisher eventPublisher;
@@ -92,23 +88,6 @@ public class TransferService {
 		}
 		transfer.setStatus(TransferStatus.CANCELLED);
 		return toResponse(transfer);
-	}
-
-	@Transactional
-	public LocalTransactionState createTransferLocally(PendingTransferLocalArgs args) {
-		try {
-			transferRepository.save(TransferEntity.builder()
-					.id(args.getTransferId())
-					.fromUserId(args.getFromUserId())
-					.toUserId(args.getToUserId())
-					.amount(args.getAmount())
-					.status(TransferStatus.PENDING)
-					.build());
-			return LocalTransactionState.COMMIT_MESSAGE;
-		} catch (Exception e) {
-			log.error("Failed to create transfer locally: {}", args.getTransferId(), e);
-			return LocalTransactionState.ROLLBACK_MESSAGE;
-		}
 	}
 
 	private static void validateTransferRequest(TransferRequest request) {

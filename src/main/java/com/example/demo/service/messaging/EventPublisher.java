@@ -34,6 +34,7 @@ public class EventPublisher {
 				.build())
 				.getBytes(StandardCharsets.UTF_8);
 		final var msg = new Message(properties.getTopics().getPendingTransfer(), body);
+		msg.setTags(TransferTransactionListener.TAG);
 		final var localArgs = PendingTransferLocalArgs.builder()
 				.transferId(transferId)
 				.fromUserId(request.getFromUserId())
