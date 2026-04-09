@@ -60,15 +60,15 @@ public class TransferController {
 	 * Lists transfers for one user with pagination.
 	 *
 	 * @param userId user id
-	 * @param page zero-based page number
-	 * @param size page size
+	 * @param pageNumber zero-based page number
+	 * @param pageSize page size
 	 * @return paged transfer response
 	 */
 	public PagedTransferResponse listTransfers(
-			@RequestParam @NotBlank String userId,
-			@RequestParam(defaultValue = "0") @Min(0) int page,
-			@RequestParam(defaultValue = "20") @Min(0) @Max(100) int size) {
-		return transferService.listTransfers(userId, page, size);
+			@RequestParam("userId") @NotBlank String userId,
+			@RequestParam(name = "pageNumber", defaultValue = "0") @Min(0) int pageNumber,
+			@RequestParam(name = "pageSize", defaultValue = "20") @Min(0) @Max(100) int pageSize) {
+		return transferService.listTransfers(userId, pageNumber, pageSize);
 	}
 
 	@PostMapping("/{transferId}/cancel")

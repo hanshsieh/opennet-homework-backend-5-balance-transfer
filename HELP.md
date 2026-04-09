@@ -77,7 +77,7 @@ Balances are updated asynchronously through RocketMQ. If you query immediately, 
 ## List transfer history
 
 ```bash
-curl -s "http://localhost:8080/transfers?userId=alice&page=0&size=20"
+curl -s "http://localhost:8080/transfers?userId=alice&pageNumber=0&pageSize=20"
 ```
 
 ### Cancel transfer
