@@ -54,6 +54,8 @@ class TransferServiceTest {
 				.build();
 		final var sendResult = new TransactionSendResult();
 		sendResult.setLocalTransactionState(LocalTransactionState.COMMIT_MESSAGE);
+		when(userRepository.existsByUserId("u1")).thenReturn(true);
+		when(userRepository.existsByUserId("u2")).thenReturn(true);
 		when(eventPublisher.sendPendingTransfer(any(String.class), eq(request))).thenReturn(sendResult);
 
 		final var id = transferService.createTransfer(request);
@@ -71,6 +73,8 @@ class TransferServiceTest {
 				.build();
 		final var sendResult = new TransactionSendResult();
 		sendResult.setLocalTransactionState(LocalTransactionState.ROLLBACK_MESSAGE);
+		when(userRepository.existsByUserId("u1")).thenReturn(true);
+		when(userRepository.existsByUserId("u2")).thenReturn(true);
 		when(eventPublisher.sendPendingTransfer(any(String.class), eq(request))).thenReturn(sendResult);
 
 		assertThatThrownBy(() -> transferService.createTransfer(request))
@@ -85,6 +89,8 @@ class TransferServiceTest {
 				.toUserId("u2")
 				.amount(50L)
 				.build();
+		when(userRepository.existsByUserId("u1")).thenReturn(true);
+		when(userRepository.existsByUserId("u2")).thenReturn(true);
 		when(eventPublisher.sendPendingTransfer(any(String.class), eq(request)))
 				.thenThrow(new RuntimeException("boom"));
 
@@ -100,6 +106,35 @@ class TransferServiceTest {
 				.toUserId("u1")
 				.amount(10L)
 				.build();
+
+		assertThatThrownBy(() -> transferService.createTransfer(request))
+				.isInstanceOf(ApiException.class)
+				.satisfies(ex -> assertThat(((ApiException) ex).getCode()).isEqualTo(ErrorCode.VALIDATION_ERROR));
+	}
+
+	@Test
+	void createTransfer_shouldThrowValidationErrorWhenFromUserDoesNotExist() {
+		final var request = TransferRequest.builder()
+				.fromUserId("u1")
+				.toUserId("u2")
+				.amount(10L)
+				.build();
+		when(userRepository.existsByUserId("u1")).thenReturn(false);
+
+		assertThatThrownBy(() -> transferService.createTransfer(request))
+				.isInstanceOf(ApiException.class)
+				.satisfies(ex -> assertThat(((ApiException) ex).getCode()).isEqualTo(ErrorCode.VALIDATION_ERROR));
+	}
+
+	@Test
+	void createTransfer_shouldThrowValidationErrorWhenToUserDoesNotExist() {
+		final var request = TransferRequest.builder()
+				.fromUserId("u1")
+				.toUserId("u2")
+				.amount(10L)
+				.build();
+		when(userRepository.existsByUserId("u1")).thenReturn(true);
+		when(userRepository.existsByUserId("u2")).thenReturn(false);
 
 		assertThatThrownBy(() -> transferService.createTransfer(request))
 				.isInstanceOf(ApiException.class)

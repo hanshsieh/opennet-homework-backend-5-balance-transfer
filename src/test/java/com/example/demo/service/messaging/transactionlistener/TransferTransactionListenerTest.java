@@ -26,7 +26,6 @@ import com.example.demo.repository.TransferRepository;
 import com.example.demo.service.messaging.MessageTopic;
 import com.example.demo.service.messaging.localargs.PendingTransferLocalArgs;
 import com.example.demo.service.messaging.payload.PendingTransferPayload;
-import com.example.demo.service.messaging.transactionlistener.TransferTransactionListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)

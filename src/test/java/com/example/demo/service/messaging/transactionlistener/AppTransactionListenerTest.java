@@ -16,8 +16,6 @@ import org.apache.rocketmq.common.message.MessageExt;
 import org.junit.jupiter.api.Test;
 
 import com.example.demo.service.messaging.MessageTopic;
-import com.example.demo.service.messaging.transactionlistener.AppTransactionListener;
-import com.example.demo.service.messaging.transactionlistener.TopicTransactionListener;
 
 class AppTransactionListenerTest {
 

@@ -52,6 +52,7 @@ public class TransferService {
 	 */
 	public String createTransfer(TransferRequest request) {
 		validateTransferRequest(request);
+		validateTransferUsersExist(request);
 		final var id = UUID.randomUUID().toString();
 		try {
 			final var sendResult = eventPublisher.sendPendingTransfer(id, request);
@@ -130,6 +131,22 @@ public class TransferService {
 		if (request.getFromUserId().equals(request.getToUserId())) {
 			throw new ApiException(ErrorCode.VALIDATION_ERROR,
 					"fromUserId and toUserId must differ");
+		}
+	}
+
+	/**
+	 * Validates that both transfer participants exist.
+	 *
+	 * @param request transfer input
+	 */
+	private void validateTransferUsersExist(TransferRequest request) {
+		if (!userRepository.existsByUserId(request.getFromUserId())) {
+			throw new ApiException(ErrorCode.VALIDATION_ERROR,
+					"fromUserId does not exist: " + request.getFromUserId());
+		}
+		if (!userRepository.existsByUserId(request.getToUserId())) {
+			throw new ApiException(ErrorCode.VALIDATION_ERROR,
+					"toUserId does not exist: " + request.getToUserId());
 		}
 	}
 
