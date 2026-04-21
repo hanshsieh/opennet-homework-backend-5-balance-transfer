@@ -13,7 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.demo.service.messaging.AppTransactionListener;
+import com.example.demo.service.messaging.transactionlistener.AppTransactionListener;
 
 @ExtendWith(MockitoExtension.class)
 class RocketMQConfigTest {

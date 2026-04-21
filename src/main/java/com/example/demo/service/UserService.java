@@ -48,6 +48,7 @@ public class UserService {
 					.userId(request.getUserId())
 					.balance(request.getInitialBalance())
 					.build());
+			// Explicitly flush to ensure the conflict is detected before return.
 			entityManager.flush();
 		} catch (DataIntegrityViolationException | PersistenceException ex) {
 			throw new ApiException(ErrorCode.USER_ALREADY_EXISTS,

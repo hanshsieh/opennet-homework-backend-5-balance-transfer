@@ -1,4 +1,4 @@
-package com.example.demo.service.messaging;
+package com.example.demo.service.messaging.transactionlistener;
 
 import java.util.List;
 import java.util.Map;
@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.example.demo.service.messaging.MessageTopic;
+
 @Component
 /**
  * Delegates RocketMQ transaction callbacks by topic.
@@ -22,16 +24,16 @@ public class AppTransactionListener implements TransactionListener {
 
 	private static final Logger log = LoggerFactory.getLogger(AppTransactionListener.class);
 
-	private final Map<MessageTopic, TopicLocalTransactionListener> listenersByTopic;
+	private final Map<MessageTopic, TopicTransactionListener> listenersByTopic;
 
 	/**
 	 * Creates a listener router for all topic-specific local transaction handlers.
 	 *
 	 * @param topicListeners all registered topic listeners
 	 */
-	public AppTransactionListener(List<TopicLocalTransactionListener> topicListeners) {
+	public AppTransactionListener(List<TopicTransactionListener> topicListeners) {
 		this.listenersByTopic = topicListeners.stream()
-				.collect(Collectors.toMap(TopicLocalTransactionListener::topic, Function.identity(), (a, b) -> {
+				.collect(Collectors.toMap(TopicTransactionListener::topic, Function.identity(), (a, b) -> {
 					// Duplicate topic handlers make transaction routing ambiguous and unsafe.
 					throw new IllegalArgumentException("Duplicate transaction listener topic: " + a.topic());
 				}));
@@ -76,7 +78,7 @@ public class AppTransactionListener implements TransactionListener {
 	 * @param msg RocketMQ message
 	 * @return matched topic listener if present
 	 */
-	private Optional<TopicLocalTransactionListener> resolve(Message msg) {
+	private Optional<TopicTransactionListener> resolve(Message msg) {
 		return MessageTopic.fromTopicName(msg.getTopic())
 				.map(listenersByTopic::get);
 	}

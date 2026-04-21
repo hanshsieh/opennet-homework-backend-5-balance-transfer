@@ -5,7 +5,7 @@ import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.example.demo.service.messaging.AppTransactionListener;
+import com.example.demo.service.messaging.transactionlistener.AppTransactionListener;
 
 @Configuration
 /**

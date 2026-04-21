@@ -5,6 +5,7 @@ import org.apache.rocketmq.client.exception.MQClientException;
 import org.springframework.stereotype.Component;
 
 import com.example.demo.config.RocketMQProperties;
+import com.example.demo.service.messaging.messagelistener.TransferMessageListener;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;

@@ -1,4 +1,4 @@
-package com.example.demo.service.messaging;
+package com.example.demo.service.messaging.messagelistener;
 
 import java.util.List;
 

@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.demo.config.RocketMQProperties;
+import com.example.demo.service.messaging.messagelistener.TransferMessageListener;
 
 @ExtendWith(MockitoExtension.class)
 class TransferMessageConsumerTest {

@@ -1,4 +1,4 @@
-package com.example.demo.service.messaging;
+package com.example.demo.service.messaging.transactionlistener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -15,12 +15,16 @@ import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.junit.jupiter.api.Test;
 
+import com.example.demo.service.messaging.MessageTopic;
+import com.example.demo.service.messaging.transactionlistener.AppTransactionListener;
+import com.example.demo.service.messaging.transactionlistener.TopicTransactionListener;
+
 class AppTransactionListenerTest {
 
 	@Test
 	void constructor_shouldThrowWhenDuplicateTopicListenersProvided() {
-		final var first = mock(TopicLocalTransactionListener.class);
-		final var second = mock(TopicLocalTransactionListener.class);
+		final var first = mock(TopicTransactionListener.class);
+		final var second = mock(TopicTransactionListener.class);
 		when(first.topic()).thenReturn(MessageTopic.PENDING_TRANSFER);
 		when(second.topic()).thenReturn(MessageTopic.PENDING_TRANSFER);
 
@@ -30,7 +34,7 @@ class AppTransactionListenerTest {
 
 	@Test
 	void executeLocalTransaction_shouldDelegateToTopicListener() {
-		final var delegate = mock(TopicLocalTransactionListener.class);
+		final var delegate = mock(TopicTransactionListener.class);
 		when(delegate.topic()).thenReturn(MessageTopic.PENDING_TRANSFER);
 		when(delegate.executeLocalTransaction(any(), any()))
 				.thenReturn(LocalTransactionState.COMMIT_MESSAGE);
@@ -45,7 +49,7 @@ class AppTransactionListenerTest {
 
 	@Test
 	void executeLocalTransaction_shouldRollbackWhenTopicUnsupported() {
-		final var delegate = mock(TopicLocalTransactionListener.class);
+		final var delegate = mock(TopicTransactionListener.class);
 		when(delegate.topic()).thenReturn(MessageTopic.PENDING_TRANSFER);
 		final var listener = new AppTransactionListener(List.of(delegate));
 		final var msg = new Message("unknown-topic", new byte[0]);
@@ -58,7 +62,7 @@ class AppTransactionListenerTest {
 
 	@Test
 	void checkLocalTransaction_shouldDelegateToTopicListener() {
-		final var delegate = mock(TopicLocalTransactionListener.class);
+		final var delegate = mock(TopicTransactionListener.class);
 		when(delegate.topic()).thenReturn(MessageTopic.PENDING_TRANSFER);
 		when(delegate.checkLocalTransaction(any()))
 				.thenReturn(LocalTransactionState.COMMIT_MESSAGE);
@@ -74,7 +78,7 @@ class AppTransactionListenerTest {
 
 	@Test
 	void checkLocalTransaction_shouldReturnUnknownWhenTopicUnsupported() {
-		final var delegate = mock(TopicLocalTransactionListener.class);
+		final var delegate = mock(TopicTransactionListener.class);
 		when(delegate.topic()).thenReturn(MessageTopic.PENDING_TRANSFER);
 		final var listener = new AppTransactionListener(List.of(delegate));
 		final var msg = new MessageExt();

@@ -1,4 +1,4 @@
-package com.example.demo.service.messaging;
+package com.example.demo.service.messaging.transactionlistener;
 
 import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.apache.rocketmq.common.message.Message;
@@ -12,6 +12,7 @@ import jakarta.persistence.EntityManager;
 import com.example.demo.entity.TransferEntity;
 import com.example.demo.entity.TransferStatus;
 import com.example.demo.repository.TransferRepository;
+import com.example.demo.service.messaging.MessageTopic;
 import com.example.demo.service.messaging.localargs.PendingTransferLocalArgs;
 import com.example.demo.service.messaging.payload.PendingTransferPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * Local transaction handler for pending transfer messages.
  */
-public class TransferTransactionListener implements TopicLocalTransactionListener {
+public class TransferTransactionListener implements TopicTransactionListener {
 
 	private static final Logger log = LoggerFactory.getLogger(TransferTransactionListener.class);
 
@@ -74,6 +75,7 @@ public class TransferTransactionListener implements TopicLocalTransactionListene
 					.amount(args.getAmount())
 					.status(TransferStatus.PENDING)
 					.build());
+			entityManager.flush();
 			return LocalTransactionState.COMMIT_MESSAGE;
 		} catch (Exception e) {
 			log.error("Failed to create transfer locally: {}", args.getTransferId(), e);
