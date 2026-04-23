@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
@@ -53,12 +54,12 @@ class UserServiceTest {
 	}
 
 	@Test
-	void createUser_shouldThrowConflictWhenPersistenceFails() {
+	void createUser_shouldThrowConflictWhenConstraintViolationOccurs() {
 		final var request = CreateUserRequest.builder()
 				.userId("alice")
 				.initialBalance(100L)
 				.build();
-		doThrow(new PersistenceException("duplicate")).when(entityManager).persist(any(UserEntity.class));
+		doThrow(new DataIntegrityViolationException("duplicate")).when(entityManager).persist(any(UserEntity.class));
 
 		assertThatThrownBy(() -> userService.createUser(request))
 				.isInstanceOf(ApiException.class)
@@ -67,6 +68,21 @@ class UserServiceTest {
 					assertThat(apiException.getCode()).isEqualTo(ErrorCode.USER_ALREADY_EXISTS);
 					assertThat(apiException.getMessage()).contains("User already exists: alice");
 				});
+	}
+
+	@Test
+	void createUser_shouldPropagatePersistenceException() {
+		final var request = CreateUserRequest.builder()
+				.userId("alice")
+				.initialBalance(100L)
+				.build();
+		doThrow(new PersistenceException("unexpected persistence error"))
+				.when(entityManager).persist(any(UserEntity.class));
+
+		assertThatThrownBy(() -> userService.createUser(request))
+				.isInstanceOf(PersistenceException.class)
+				.isNotInstanceOf(ApiException.class)
+				.hasMessageContaining("unexpected persistence error");
 	}
 
 	@Test

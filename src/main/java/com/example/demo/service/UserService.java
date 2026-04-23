@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceException;
 import com.example.demo.dto.CreateUserRequest;
 import com.example.demo.dto.UserBalanceResponse;
 import com.example.demo.entity.UserEntity;
@@ -50,7 +49,7 @@ public class UserService {
 					.build());
 			// Explicitly flush to ensure the conflict is detected before return.
 			entityManager.flush();
-		} catch (DataIntegrityViolationException | PersistenceException ex) {
+		} catch (DataIntegrityViolationException ex) {
 			throw new ApiException(ErrorCode.USER_ALREADY_EXISTS,
 					"User already exists: " + request.getUserId());
 		}
